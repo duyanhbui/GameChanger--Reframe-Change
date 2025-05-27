@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concerns Management - Change Management</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="display-6">
+                    <i data-feather="message-circle" class="me-3"></i>
+                    Concerns Management
+                </h1>
+                <p class="lead">Assign concerns to SMEs and track responses</p>
+            </div>
+            <div>
+                <a href="/manager" class="btn btn-outline-secondary me-2">
+                    <i data-feather="bar-chart-2" class="me-2"></i>
+                    Dashboard
+                </a>
+                <a href="/manager/projects" class="btn btn-outline-primary">
+                    <i data-feather="folder" class="me-2"></i>
+                    Projects
+                </a>
+            </div>
+        </div>
+
+        <!-- Project Filter -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <form method="GET" class="d-flex">
+                    <select name="project_id" class="form-select me-2" onchange="this.form.submit()">
+                        <option value="">All Projects</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}" {% if current_project and current_project.id == project.id %}selected{% endif %}>
+                            {{ project.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Unassigned Concerns -->
+        {% set unassigned_concerns = responses|selectattr('concern_assignments', 'equalto', [])|list %}
+        {% if unassigned_concerns %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i data-feather="alert-triangle" class="me-2"></i>
+                    Unassigned Concerns ({{ unassigned_concerns|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for response in unassigned_concerns %}
+                <div class="border rounded p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="text-primary">{{ response.name or 'Anonymous' }} 
+                                <small class="text-muted">({{ response.department or 'Unknown Department' }})</small>
+                            </h6>
+                            <p class="mb-2"><strong>Concern:</strong> {{ response.concern }}</p>
+                            <small class="text-muted">
+                                Mental Model: {{ response.mental_model }} | 
+                                Submitted: {{ response.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-primary btn-sm me-2" 
+                                    onclick="showAssignModal({{ response.id }}, '{{ response.concern|replace("'", "\\'") }}')">
+                                <i data-feather="user-plus" class="me-1"></i>
+                                Assign to SME
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" 
+                                    onclick="showResponseModal({{ response.id }}, '{{ response.concern|replace("'", "\\'") }}')">
+                                <i data-feather="edit" class="me-1"></i>
+                                Respond Directly
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Assigned Concerns -->
+        {% if assignments %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="users" class="me-2"></i>
+                    Assigned Concerns ({{ assignments|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Concern</th>
+                                <th>Assigned To</th>
+                                <th>Status</th>
+                                <th>Assigned Date</th>
+                                <th>Response</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments %}
+                            <tr>
+                                <td>
+                                    <div style="max-width: 300px;">
+                                        {{ assignment.concern_text[:100] }}
+                                        {% if assignment.concern_text|length > 100 %}...{% endif %}
+                                    </div>
+                                    <small class="text-muted">by {{ assignment.stakeholder_response.name or 'Anonymous' }}</small>
+                                </td>
+                                <td>
+                                    {% if assignment.sme_name %}
+                                        <strong>{{ assignment.sme_name }}</strong>
+                                        {% if assignment.sme_email %}
+                                        <br><small class="text-muted">{{ assignment.sme_email }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Direct Response</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if assignment.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif assignment.status == 'responded' %}
+                                        <span class="badge bg-info">Responded</span>
+                                    {% elif assignment.status == 'resolved' %}
+                                        <span class="badge bg-success">Resolved</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ assignment.assigned_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if assignment.response_text %}
+                                        <button type="button" class="btn btn-outline-info btn-sm" 
+                                                onclick="showResponseDetails('{{ assignment.response_text|replace("'", "\\'") }}', '{{ assignment.sme_name or assignment.assigned_by }}')">
+                                            View Response
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted">No response yet</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if assignment.status == 'responded' %}
+                                        <button class="btn btn-success btn-sm" 
+                                                onclick="resolveAssignment({{ assignment.id }})">
+                                            <i data-feather="check" class="me-1"></i>
+                                            Mark Resolved
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not unassigned_concerns and not assignments %}
+        <div class="text-center py-5">
+            <i data-feather="message-circle" class="text-muted mb-3" style="width: 64px; height: 64px;"></i>
+            <h4>No Concerns Yet</h4>
+            <p class="text-muted">Stakeholder concerns will appear here when submitted through assessments.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Assign to SME Modal -->
+    <div class="modal fade" id="assignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="/manager/concerns/assign">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Assign to SME</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="response_id" id="assign_response_id">
+                        <input type="hidden" name="assignment_type" value="sme">
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Concern:</strong></label>
+                            <p id="assign_concern_text" class="text-muted"></p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sme_name" class="form-label">SME Name *</label>
+                            <input type="text" class="form-control" name="sme_name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sme_email" class="form-label">SME Email</label>
+                            <input type="email" class="form-control" name="sme_email" 
+                                   placeholder="Email notification will be sent if provided">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="assigned_by" class="form-label">Your Name</label>
+                            <input type="text" class="form-control" name="assigned_by" 
+                                   value="Change Manager" placeholder="Change Manager">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Assign to SME</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direct Response Modal -->
+    <div class="modal fade" id="responseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="/manager/concerns/assign">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Respond Directly</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="response_id" id="response_response_id">
+                        <input type="hidden" name="assignment_type" value="manager">
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Concern:</strong></label>
+                            <p id="response_concern_text" class="text-muted"></p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="manager_response" class="form-label">Your Response *</label>
+                            <textarea class="form-control" name="manager_response" rows="4" required
+                                      placeholder="Provide your response to address this stakeholder concern..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="assigned_by" class="form-label">Your Name</label>
+                            <input type="text" class="form-control" name="assigned_by" 
+                                   value="Change Manager" placeholder="Change Manager">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Save Response</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Details Modal -->
+    <div class="modal fade" id="responseDetailsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Response Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Responded by:</strong></label>
+                        <p id="response_author"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Response:</strong></label>
+                        <p id="response_content"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        feather.replace();
+
+        function showAssignModal(responseId, concernText) {
+            document.getElementById('assign_response_id').value = responseId;
+            document.getElementById('assign_concern_text').textContent = concernText;
+            new bootstrap.Modal(document.getElementById('assignModal')).show();
+        }
+
+        function showResponseModal(responseId, concernText) {
+            document.getElementById('response_response_id').value = responseId;
+            document.getElementById('response_concern_text').textContent = concernText;
+            new bootstrap.Modal(document.getElementById('responseModal')).show();
+        }
+
+        function showResponseDetails(responseText, author) {
+            document.getElementById('response_content').textContent = responseText;
+            document.getElementById('response_author').textContent = author;
+            new bootstrap.Modal(document.getElementById('responseDetailsModal')).show();
+        }
+
+        function resolveAssignment(assignmentId) {
+            if (confirm('Mark this concern as resolved?')) {
+                fetch(`/manager/concerns/${assignmentId}/resolve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert('Error resolving concern');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error resolving concern');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

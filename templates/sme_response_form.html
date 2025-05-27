@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME Response - Change Management</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-6">
+                        <i data-feather="message-circle" class="me-3"></i>
+                        SME Response Required
+                    </h1>
+                    <p class="lead">Please provide your expert response to address this stakeholder concern</p>
+                </div>
+
+                <!-- Assignment Details -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i data-feather="info" class="me-2"></i>
+                            Assignment Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Project:</strong> {{ assignment.project.name }}</p>
+                                <p><strong>Assigned by:</strong> {{ assignment.assigned_by }}</p>
+                                <p><strong>Assigned to:</strong> {{ assignment.sme_name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Assignment Date:</strong> {{ assignment.assigned_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <p><strong>Stakeholder:</strong> {{ assignment.stakeholder_response.name or 'Anonymous' }}</p>
+                                {% if assignment.stakeholder_response.department %}
+                                <p><strong>Department:</strong> {{ assignment.stakeholder_response.department }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stakeholder Concern -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i data-feather="alert-circle" class="me-2"></i>
+                            Stakeholder Concern
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <blockquote class="blockquote">
+                            <p class="mb-0">{{ assignment.concern_text }}</p>
+                            <footer class="blockquote-footer mt-2">
+                                {{ assignment.stakeholder_response.name or 'Anonymous Stakeholder' }}
+                                <cite title="Mental Model">{{ assignment.stakeholder_response.mental_model }}</cite>
+                            </footer>
+                        </blockquote>
+                    </div>
+                </div>
+
+                <!-- Response Form -->
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i data-feather="edit" class="me-2"></i>
+                            Your Expert Response
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="mb-4">
+                                <label for="response_text" class="form-label">
+                                    <strong>Please provide your response to address this concern:</strong>
+                                </label>
+                                <textarea class="form-control" id="response_text" name="response_text" 
+                                          rows="6" required
+                                          placeholder="Provide a detailed response that addresses the stakeholder's concern. Your expertise will help the change management team better support stakeholders through this transition."></textarea>
+                                <div class="form-text">
+                                    Consider the stakeholder's perspective and mental model when crafting your response.
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="manager_email" class="form-label">
+                                    Change Manager Email (optional)
+                                </label>
+                                <input type="email" class="form-control" id="manager_email" name="manager_email"
+                                       placeholder="manager@company.com">
+                                <div class="form-text">
+                                    If provided, the change manager will be notified when you submit your response.
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i data-feather="send" class="me-2"></i>
+                                    Submit Response
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Guidelines Card -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i data-feather="help-circle" class="me-2"></i>
+                            Response Guidelines
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-success">Do:</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-1">
+                                        <i data-feather="check" class="text-success me-2"></i>
+                                        Address the specific concern raised
+                                    </li>
+                                    <li class="mb-1">
+                                        <i data-feather="check" class="text-success me-2"></i>
+                                        Provide actionable information
+                                    </li>
+                                    <li class="mb-1">
+                                        <i data-feather="check" class="text-success me-2"></i>
+                                        Use clear, accessible language
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-warning">Consider:</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-1">
+                                        <i data-feather="arrow-right" class="text-warning me-2"></i>
+                                        The stakeholder's mental model
+                                    </li>
+                                    <li class="mb-1">
+                                        <i data-feather="arrow-right" class="text-warning me-2"></i>
+                                        Their department's perspective
+                                    </li>
+                                    <li class="mb-1">
+                                        <i data-feather="arrow-right" class="text-warning me-2"></i>
+                                        Practical next steps
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>feather.replace();</script>
+</body>
+</html>

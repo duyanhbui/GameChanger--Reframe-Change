@@ -6,6 +6,7 @@ import os
 import PyPDF2
 from dateutil import parser
 import uuid
+from email_service import send_concern_assignment_email, send_response_notification_email
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "change-management-key")
@@ -363,6 +364,129 @@ def assign_concern_to_sme(concern_id):
     db.session.commit()
     
     return jsonify({"status": "success", "message": "Concern assigned to SME"})
+
+@app.route("/manager/concerns")
+def concerns_management():
+    """Concerns management dashboard"""
+    project_id = request.args.get('project_id')
+    
+    if project_id:
+        responses = StakeholderResponse.query.filter_by(project_id=project_id).filter(StakeholderResponse.concern.isnot(None)).all()
+        project = ChangeProject.query.get_or_404(project_id)
+        assignments = ConcernAssignment.query.filter_by(project_id=project_id).all()
+    else:
+        responses = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None)).all()
+        project = None
+        assignments = ConcernAssignment.query.all()
+    
+    projects = ChangeProject.query.filter_by(is_active=True).all()
+    
+    return render_template("concerns_management.html", 
+                         responses=responses, 
+                         assignments=assignments,
+                         projects=projects,
+                         current_project=project)
+
+@app.route("/manager/concerns/assign", methods=["POST"])
+def assign_concern():
+    """Assign a concern to an SME or respond directly as manager"""
+    response_id = request.form.get('response_id')
+    assignment_type = request.form.get('assignment_type')  # 'sme' or 'manager'
+    
+    response = StakeholderResponse.query.get_or_404(response_id)
+    
+    if assignment_type == 'sme':
+        # Assign to SME
+        sme_name = request.form.get('sme_name')
+        sme_email = request.form.get('sme_email')
+        assigned_by = request.form.get('assigned_by', 'Change Manager')
+        
+        assignment = ConcernAssignment()
+        assignment.stakeholder_response_id = response.id
+        assignment.project_id = response.project_id
+        assignment.concern_text = response.concern
+        assignment.assigned_by = assigned_by
+        assignment.sme_name = sme_name
+        assignment.sme_email = sme_email
+        assignment.status = "pending"
+        
+        db.session.add(assignment)
+        db.session.commit()
+        
+        # Send email notification to SME
+        if sme_email:
+            project = ChangeProject.query.get(response.project_id)
+            email_sent = send_concern_assignment_email(
+                sme_email=sme_email,
+                sme_name=sme_name,
+                concern_text=response.concern,
+                project_name=project.name if project else "Change Project",
+                assignment_id=assignment.id,
+                stakeholder_name=response.name
+            )
+            
+            if email_sent:
+                assignment.email_sent = True
+                assignment.email_sent_at = datetime.utcnow()
+                db.session.commit()
+                flash(f"Concern assigned to {sme_name} and email sent successfully!", "success")
+            else:
+                flash(f"Concern assigned to {sme_name}, but email notification failed.", "warning")
+        else:
+            flash(f"Concern assigned to {sme_name} (no email provided).", "success")
+    
+    elif assignment_type == 'manager':
+        # Manager responds directly
+        manager_response = request.form.get('manager_response')
+        assigned_by = request.form.get('assigned_by', 'Change Manager')
+        
+        assignment = ConcernAssignment()
+        assignment.stakeholder_response_id = response.id
+        assignment.project_id = response.project_id
+        assignment.concern_text = response.concern
+        assignment.assigned_by = assigned_by
+        assignment.response_text = manager_response
+        assignment.response_method = "manager"
+        assignment.status = "resolved"
+        assignment.responded_at = datetime.utcnow()
+        
+        db.session.add(assignment)
+        db.session.commit()
+        
+        flash("Response added successfully by change manager!", "success")
+    
+    return redirect(url_for('concerns_management', project_id=response.project_id))
+
+@app.route("/sme/respond/<int:assignment_id>", methods=["GET", "POST"])
+def sme_respond(assignment_id):
+    """SME response interface"""
+    assignment = ConcernAssignment.query.get_or_404(assignment_id)
+    
+    if request.method == "POST":
+        response_text = request.form.get('response_text')
+        
+        if response_text:
+            assignment.response_text = response_text
+            assignment.response_method = "sme"
+            assignment.status = "responded"
+            assignment.responded_at = datetime.utcnow()
+            
+            db.session.commit()
+            
+            return render_template("sme_response_success.html", assignment=assignment)
+        else:
+            flash("Please provide a response to the concern.", "error")
+    
+    return render_template("sme_response_form.html", assignment=assignment)
+
+@app.route("/manager/concerns/<int:assignment_id>/resolve", methods=["POST"])
+def resolve_concern(assignment_id):
+    """Mark a concern as resolved"""
+    assignment = ConcernAssignment.query.get_or_404(assignment_id)
+    assignment.status = "resolved"
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Concern marked as resolved"})
 
 @app.route("/manager/export")
 def export_data():
