@@ -130,6 +130,28 @@ class ChangeProject(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
 
+
+class FAQEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    project_id = db.Column(db.Integer, db.ForeignKey('change_project.id'), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    answer = db.Column(db.Text, nullable=False)
+    
+    # Link to original concern assignment if applicable
+    concern_assignment_id = db.Column(db.Integer, db.ForeignKey('concern_assignment.id'), nullable=True)
+    
+    # Categorization
+    category = db.Column(db.String(100), default='General')
+    tags = db.Column(db.String(500))  # comma-separated tags
+    
+    # Status
+    is_active = db.Column(db.Boolean, default=True)
+    
+    project = db.relationship('ChangeProject', backref='faq_entries')
+    concern_assignment = db.relationship('ConcernAssignment', backref='faq_entry')
+
 # KB16 Model Logic
 def assign_model(feeling, style, focus_areas):
     """Assign KB16 model based on responses"""
@@ -595,6 +617,42 @@ def ai_suggest_response_assignment():
     )
     
     return jsonify(ai_suggestion)
+
+@app.route('/manager/concerns/add-to-faq', methods=['POST'])
+def add_to_faq():
+    """Add a resolved concern and response to the FAQ database"""
+    data = request.get_json()
+    assignment_id = data.get('assignment_id')
+    question = data.get('question')
+    answer = data.get('answer')
+    
+    if not assignment_id or not question or not answer:
+        return jsonify({"error": "Missing required information"}), 400
+    
+    # Get the assignment to ensure it exists and get project info
+    assignment = ConcernAssignment.query.get_or_404(assignment_id)
+    
+    # Check if this assignment already has an FAQ entry
+    existing_faq = FAQEntry.query.filter_by(concern_assignment_id=assignment_id).first()
+    if existing_faq:
+        return jsonify({"error": "This concern has already been added to the FAQ database"}), 400
+    
+    # Create new FAQ entry
+    faq_entry = FAQEntry(
+        project_id=assignment.project_id,
+        question=question.strip(),
+        answer=answer.strip(),
+        concern_assignment_id=assignment_id,
+        category="Stakeholder Concerns"
+    )
+    
+    try:
+        db.session.add(faq_entry)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "Successfully added to FAQ database"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Database error occurred"}), 500
 
 @app.route("/manager/export")
 def export_data():

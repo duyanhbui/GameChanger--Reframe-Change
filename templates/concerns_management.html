@@ -143,10 +143,19 @@
                                 <td>{{ assignment.assigned_at.strftime('%Y-%m-%d') }}</td>
                                 <td>
                                     {% if assignment.response_text %}
-                                        <button type="button" class="btn btn-outline-info btn-sm" 
-                                                onclick="showResponseDetails('{{ assignment.response_text|replace("'", "\\'") }}', '{{ assignment.sme_name or assignment.assigned_by }}')">
-                                            View Response
-                                        </button>
+                                        <div class="d-flex gap-1">
+                                            <button type="button" class="btn btn-outline-info btn-sm" 
+                                                    onclick="showResponseDetails('{{ assignment.response_text|replace("'", "\\'") }}', '{{ assignment.sme_name or assignment.assigned_by }}')">
+                                                View Response
+                                            </button>
+                                            {% if assignment.status == 'resolved' %}
+                                            <button type="button" class="btn btn-outline-success btn-sm" 
+                                                    onclick="addToFAQ({{ assignment.id }}, '{{ assignment.concern_text|replace("'", "\\'") }}', '{{ assignment.response_text|replace("'", "\\'") }}')"
+                                                    title="Add to FAQ Database">
+                                                <i data-feather="bookmark"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
                                     {% else %}
                                         <span class="text-muted">No response yet</span>
                                     {% endif %}
@@ -637,6 +646,45 @@
                     } else {
                         alert('Error archiving concern');
                     }
+                });
+            }
+        }
+
+        function addToFAQ(assignmentId, question, answer) {
+            if (confirm('Add this question and response to the FAQ database? This will help build a knowledge base for future reference.')) {
+                fetch('/manager/concerns/add-to-faq', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        assignment_id: assignmentId,
+                        question: question,
+                        answer: answer
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Successfully added to FAQ database!');
+                        // Visual feedback - change the button color temporarily
+                        const button = event.target.closest('button');
+                        const originalClass = button.className;
+                        button.className = 'btn btn-success btn-sm';
+                        button.innerHTML = '<i data-feather="check"></i>';
+                        feather.replace();
+                        setTimeout(() => {
+                            button.className = originalClass;
+                            button.innerHTML = '<i data-feather="bookmark"></i>';
+                            feather.replace();
+                        }, 2000);
+                    } else {
+                        alert('Error adding to FAQ: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error adding to FAQ database');
                 });
             }
         }

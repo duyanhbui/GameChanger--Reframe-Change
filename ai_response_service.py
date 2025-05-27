@@ -165,20 +165,18 @@ Generate a suggested response that the change manager can review and edit before
 
 def get_existing_faqs(project_id):
     """Get existing FAQ content for context"""
-    from main import ConcernAssignment
+    from main import FAQEntry
     
-    # Get resolved concerns that could serve as FAQ content
-    resolved_concerns = ConcernAssignment.query.filter_by(
+    # Get active FAQ entries for this project
+    faq_entries = FAQEntry.query.filter_by(
         project_id=project_id,
-        status='resolved'
-    ).filter(
-        ConcernAssignment.response_text.isnot(None)
+        is_active=True
     ).all()
     
     faq_content = []
-    for concern in resolved_concerns:
-        if concern.response_text and concern.response_text.strip():
-            faq_content.append(f"Q: {concern.concern_text}\nA: {concern.response_text}")
+    for faq in faq_entries:
+        if faq.question and faq.answer:
+            faq_content.append(f"Q: {faq.question}\nA: {faq.answer}")
     
     return "\n\n".join(faq_content) if faq_content else None
 
