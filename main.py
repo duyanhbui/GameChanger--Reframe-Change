@@ -279,10 +279,14 @@ def manager_dashboard():
     # Sort by timestamp descending to show most recent first
     concerns = sorted(concerns, key=lambda x: x.timestamp, reverse=True)
     
-    # Debug: Print actual count and details
-    print(f"DEBUG: Found {len(concerns)} concerns for dashboard")
-    for i, concern in enumerate(concerns):
-        print(f"DEBUG: Concern {i+1}: ID={concern.id}, Name={concern.name}, Text={concern.concern[:50]}...")
+    # Ensure unique concerns only
+    seen_ids = set()
+    unique_concerns = []
+    for concern in concerns:
+        if concern.id not in seen_ids:
+            unique_concerns.append(concern)
+            seen_ids.add(concern.id)
+    concerns = unique_concerns
     sentiment_analysis = {"eager": 0, "cautious": 0}
     department_breakdown = {}
     
