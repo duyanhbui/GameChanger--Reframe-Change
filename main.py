@@ -534,6 +534,68 @@ def update_response():
     
     return redirect(url_for('concerns_management', project_id=assignment.project_id))
 
+@app.route("/manager/concerns/answer-directly", methods=["POST"])
+def answer_directly():
+    """Change manager answers a pending assignment directly"""
+    assignment_id = request.form.get('assignment_id')
+    direct_response = request.form.get('direct_response')
+    
+    if not assignment_id or not direct_response:
+        flash("Missing required information", "error")
+        return redirect(url_for('concerns_management'))
+    
+    assignment = ConcernAssignment.query.get_or_404(assignment_id)
+    
+    # Update the assignment with manager's direct response
+    assignment.response_text = direct_response
+    assignment.response_method = "manager"
+    assignment.status = "resolved"
+    assignment.responded_at = datetime.utcnow()
+    
+    db.session.commit()
+    flash("You have successfully answered the concern directly!", "success")
+    
+    return redirect(url_for('concerns_management', project_id=assignment.project_id))
+
+@app.route('/api/ai-suggest-response-assignment', methods=['POST'])
+def ai_suggest_response_assignment():
+    """API endpoint for AI-powered response suggestions for assignments"""
+    data = request.get_json()
+    assignment_id = data.get('assignment_id')
+    
+    if not assignment_id:
+        return jsonify({"error": "Assignment ID is required"}), 400
+    
+    # Get the assignment and related stakeholder response
+    assignment = ConcernAssignment.query.get_or_404(assignment_id)
+    stakeholder_response = assignment.stakeholder_response
+    
+    # Get project data for AI context
+    project = assignment.project
+    project_data = {
+        'name': project.name,
+        'description': project.description,
+        'change_strategy': project.change_strategy,
+        'key_messages': project.key_messages,
+        'project_start_date': project.project_start_date,
+        'communication_start_date': project.communication_start_date,
+        'go_live_date': project.go_live_date,
+        'assessment_end_date': project.assessment_end_date
+    }
+    
+    # Get existing FAQs for context
+    existing_faqs = get_existing_faqs(project.id)
+    
+    # Generate AI response suggestion
+    ai_suggestion = generate_ai_response_suggestion(
+        concern_text=assignment.concern_text,
+        stakeholder_mental_model=stakeholder_response.mental_model,
+        project_data=project_data,
+        existing_faqs=existing_faqs
+    )
+    
+    return jsonify(ai_suggestion)
+
 @app.route("/manager/export")
 def export_data():
     """Export stakeholder data for analysis"""
