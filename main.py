@@ -242,9 +242,8 @@ def opt_out(response_id):
     return render_template("opt_out_success.html")
 
 @app.route("/manager/concern/<int:concern_id>/assign", methods=["POST"])
-def assign_concern_to_sme():
+def assign_concern_to_sme(concern_id):
     """Assign a concern to an SME"""
-    concern_id = request.json.get('concern_id')
     sme_name = request.json.get('sme_name')
     
     response = StakeholderResponse.query.get_or_404(concern_id)
