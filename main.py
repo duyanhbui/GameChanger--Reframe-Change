@@ -7,6 +7,7 @@ import PyPDF2
 from dateutil import parser
 import uuid
 from email_service import send_concern_assignment_email, send_response_notification_email
+from ai_response_service import generate_ai_response_suggestion, get_existing_faqs
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "change-management-key")

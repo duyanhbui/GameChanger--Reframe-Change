@@ -16,4 +16,5 @@ dependencies = [
     "python-dateutil>=2.9.0.post0",
     "pypdf2>=3.0.1",
     "sendgrid>=6.12.2",
+    "openai>=1.82.0",
 ]
