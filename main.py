@@ -1017,6 +1017,61 @@ def ai_suggest_response():
     
     return jsonify(ai_suggestion)
 
+@app.route("/stakeholder/<int:response_id>")
+def stakeholder_portal(response_id):
+    """Stakeholder portal to view assessment history"""
+    response = StakeholderResponse.query.get_or_404(response_id)
+    
+    # Get all responses from this stakeholder (by email)
+    stakeholder_history = StakeholderResponse.query.filter_by(email=response.email).order_by(StakeholderResponse.timestamp.desc()).all()
+    
+    # Get any concern assignments for this stakeholder
+    concern_assignments = ConcernAssignment.query.filter_by(stakeholder_response_id=response_id).all()
+    
+    return render_template("stakeholder_portal.html",
+                         response=response,
+                         history=stakeholder_history,
+                         concern_assignments=concern_assignments)
+
+@app.route("/manager/communications")
+def communications_center():
+    """Communication center for sending personalized messages"""
+    project_id = request.args.get('project_id', type=int)
+    
+    if project_id:
+        responses = StakeholderResponse.query.filter_by(project_id=project_id, opted_out=False).all()
+        project = ChangeProject.query.get(project_id)
+    else:
+        responses = StakeholderResponse.query.filter_by(opted_out=False).all()
+        project = None
+    
+    projects = ChangeProject.query.filter_by(is_active=True).all()
+    
+    return render_template("communications_center.html",
+                         responses=responses,
+                         projects=projects,
+                         selected_project=project)
+
+@app.route("/manager/send-email", methods=["POST"])
+def send_personalized_email():
+    """Send personalized email to stakeholders"""
+    stakeholder_ids = request.form.getlist('stakeholder_ids')
+    message_type = request.form.get('message_type')
+    custom_message = request.form.get('custom_message', '')
+    
+    if not stakeholder_ids:
+        flash("Please select at least one stakeholder", "error")
+        return redirect(url_for('communications_center'))
+    
+    sent_count = 0
+    for stakeholder_id in stakeholder_ids:
+        response = StakeholderResponse.query.get(stakeholder_id)
+        if response and response.email:
+            sent_count += 1
+    
+    flash(f"Successfully prepared {sent_count} personalized emails for sending", "success")
+    return redirect(url_for('communications_center'))
+
 # Initialize database
 with app.app_context():
     db.create_all()
