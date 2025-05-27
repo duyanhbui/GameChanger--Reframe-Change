@@ -251,7 +251,8 @@ def manager_dashboard():
     total_responses = len(responses)
     model_counts = {}
     focus_counts = {"proof": 0, "process": 0, "people": 0, "possibilities": 0}
-    concerns = []
+    # Get concerns with their assignment statuses
+    concerns = [response for response in responses if response.concern]
     sentiment_analysis = {"eager": 0, "cautious": 0}
     department_breakdown = {}
     
