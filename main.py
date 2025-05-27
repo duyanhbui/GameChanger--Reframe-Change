@@ -274,19 +274,24 @@ def manager_dashboard():
     total_responses = len(responses)
     model_counts = {}
     focus_counts = {"proof": 0, "process": 0, "people": 0, "possibilities": 0}
-    # Get concerns with their assignment statuses (limit to recent ones for dashboard)
-    concerns = [response for response in responses if response.concern and response.concern.strip()]
-    # Sort by timestamp descending to show most recent first
-    concerns = sorted(concerns, key=lambda x: x.timestamp, reverse=True)
+    # Get concerns and check their assignment status
+    all_concerns = [response for response in responses if response.concern and response.concern.strip()]
     
-    # Ensure unique concerns only
-    seen_ids = set()
-    unique_concerns = []
-    for concern in concerns:
-        if concern.id not in seen_ids:
-            unique_concerns.append(concern)
-            seen_ids.add(concern.id)
-    concerns = unique_concerns
+    # Filter to only show concerns that need attention (unresolved)
+    open_concerns = []
+    for concern in all_concerns:
+        assignments = ConcernAssignment.query.filter_by(stakeholder_response_id=concern.id).all()
+        if not assignments:
+            # No assignment yet - needs attention
+            open_concerns.append(concern)
+        else:
+            # Check if any assignment is still pending or responded (not resolved)
+            has_unresolved = any(a.status in ['pending', 'responded'] for a in assignments)
+            if has_unresolved:
+                open_concerns.append(concern)
+    
+    # Sort by timestamp descending and ensure uniqueness
+    concerns = sorted(open_concerns, key=lambda x: x.timestamp, reverse=True)
     sentiment_analysis = {"eager": 0, "cautious": 0}
     department_breakdown = {}
     
