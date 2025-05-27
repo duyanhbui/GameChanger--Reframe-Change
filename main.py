@@ -382,11 +382,11 @@ def concerns_management():
     if project_id:
         responses = StakeholderResponse.query.filter_by(project_id=project_id).filter(StakeholderResponse.concern.isnot(None)).all()
         project = ChangeProject.query.get_or_404(project_id)
-        assignments = ConcernAssignment.query.filter_by(project_id=project_id).all()
+        assignments = ConcernAssignment.query.filter_by(project_id=project_id).filter(ConcernAssignment.status != 'archived').all()
     else:
         responses = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None)).all()
         project = None
-        assignments = ConcernAssignment.query.all()
+        assignments = ConcernAssignment.query.filter(ConcernAssignment.status != 'archived').all()
     
     projects = ChangeProject.query.filter_by(is_active=True).all()
     
@@ -496,6 +496,43 @@ def resolve_concern(assignment_id):
     db.session.commit()
     
     return jsonify({"status": "success", "message": "Concern marked as resolved"})
+
+@app.route("/manager/concerns/<int:assignment_id>/reopen", methods=["POST"])
+def reopen_concern(assignment_id):
+    """Reopen a resolved concern"""
+    assignment = ConcernAssignment.query.get_or_404(assignment_id)
+    assignment.status = "responded"  # Change back to responded status
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Concern reopened for further discussion"})
+
+@app.route("/manager/concerns/<int:assignment_id>/archive", methods=["POST"])
+def archive_concern(assignment_id):
+    """Archive a concern (soft delete)"""
+    assignment = ConcernAssignment.query.get_or_404(assignment_id)
+    assignment.status = "archived"
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Concern archived"})
+
+@app.route("/manager/concerns/update-response", methods=["POST"])
+def update_response():
+    """Update an existing response"""
+    assignment_id = request.form.get('assignment_id')
+    updated_response = request.form.get('updated_response')
+    
+    if not assignment_id or not updated_response:
+        flash("Missing required information", "error")
+        return redirect(url_for('concerns_management'))
+    
+    assignment = ConcernAssignment.query.get_or_404(assignment_id)
+    assignment.response_text = updated_response
+    assignment.responded_at = datetime.utcnow()  # Update timestamp
+    
+    db.session.commit()
+    flash("Response updated successfully!", "success")
+    
+    return redirect(url_for('concerns_management', project_id=assignment.project_id))
 
 @app.route("/manager/export")
 def export_data():
