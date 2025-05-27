@@ -8,20 +8,20 @@
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
-    <div class="container-fluid py-4">
+    <div class="container py-5">
         <!-- Header -->
-        <div class="row mb-4">
-            <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
                 <h1 class="display-6">
                     <i data-feather="folder" class="me-3"></i>
                     Project Management
                 </h1>
                 <p class="lead">Manage your change management projects</p>
             </div>
-            <div class="col-md-4 text-end">
+            <div>
                 <a href="/manager" class="btn btn-outline-secondary me-2">
-                    <i data-feather="arrow-left" class="me-2"></i>
-                    Back to Dashboard
+                    <i data-feather="bar-chart-2" class="me-2"></i>
+                    Dashboard
                 </a>
                 <a href="/manager/projects/create" class="btn btn-primary">
                     <i data-feather="plus" class="me-2"></i>
@@ -29,17 +29,17 @@
                 </a>
             </div>
         </div>
-        
-        <!-- Projects List -->
+
         {% if projects %}
+        <!-- Projects Table -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="mb-0">
+                        <h5 class="mb-0">
                             <i data-feather="list" class="me-2"></i>
                             All Projects
-                        </h4>
+                        </h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -47,7 +47,6 @@
                                 <thead>
                                     <tr>
                                         <th>Project Name</th>
-                                        <th>Description</th>
                                         <th>Status</th>
                                         <th>Created</th>
                                         <th>Responses</th>
@@ -59,11 +58,9 @@
                                     <tr>
                                         <td>
                                             <strong>{{ project.name }}</strong>
-                                        </td>
-                                        <td>
-                                            <span class="text-truncate d-inline-block" style="max-width: 200px;">
-                                                {{ project.description }}
-                                            </span>
+                                            {% if project.description %}
+                                            <br><small class="text-muted">{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</small>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             {% if project.is_active %}
@@ -73,7 +70,7 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <small>{{ project.created_at.strftime('%m/%d/%Y') }}</small>
+                                            {{ project.created_at.strftime('%Y-%m-%d') }}
                                         </td>
                                         <td>
                                             <span class="badge bg-info">{{ project.responses|length }}</span>
@@ -98,9 +95,6 @@
                                                         <i data-feather="play"></i>
                                                     {% endif %}
                                                 </button>
-                                                <button class="btn btn-outline-info" onclick="editProject({{ project.id }})" title="Edit">
-                                                    <i data-feather="edit"></i>
-                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -112,7 +106,34 @@
                 </div>
             </div>
         </div>
-        
+
+        <!-- Simple Stats -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-primary">{{ projects|length }}</h3>
+                        <small class="text-muted">Total Projects</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-success">{{ active_projects }}</h3>
+                        <small class="text-muted">Active Projects</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-info">{{ total_responses }}</h3>
+                        <small class="text-muted">Total Responses</small>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% else %}
         <!-- Empty State -->
         <div class="row">
@@ -133,50 +154,6 @@
             </div>
         </div>
         {% endif %}
-        
-        <!-- Quick Stats -->
-        {% if projects %}
-        <div class="row mt-4">
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3 class="text-primary">{{ projects|length }}</h3>
-                        <small class="text-muted">Total Projects</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3 class="text-success">{{ active_projects }}</h3>
-                        <small class="text-muted">Active Projects</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3 class="text-info">{{ total_responses }}</h3>
-                        <small class="text-muted">Total Responses</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3 class="text-warning">
-                            {% if projects and projects|length > 0 and total_responses > 0 %}
-                                {{ (total_responses / projects|length)|round|int }}
-                            {% else %}
-                                0
-                            {% endif %}
-                        </h3>
-                        <small class="text-muted">Avg Responses</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -192,36 +169,16 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.status === 'success') {
-                    showToast(data.message, 'success');
-                    setTimeout(() => location.reload(), 1000);
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating project status');
                 }
             })
             .catch(error => {
-                showToast('Error updating project status', 'danger');
+                console.error('Error:', error);
+                alert('Error updating project status');
             });
-        }
-        
-        function editProject(projectId) {
-            // For now, just show a message - this could be enhanced with a modal
-            showToast('Project editing feature coming soon!', 'info');
-        }
-        
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-            toast.style.zIndex = '9999';
-            toast.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-            `;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 3000);
         }
     </script>
 </body>

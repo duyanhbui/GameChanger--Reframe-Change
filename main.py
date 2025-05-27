@@ -366,7 +366,7 @@ def project_management():
     total_responses = sum(len(project.responses) for project in projects)
     active_projects = sum(1 for project in projects if project.is_active)
     
-    return render_template("project_management.html", 
+    return render_template("project_management_simple.html", 
                          projects=projects,
                          total_responses=total_responses,
                          active_projects=active_projects)
