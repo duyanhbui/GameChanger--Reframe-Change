@@ -678,6 +678,44 @@ def get_stats():
     
     return jsonify(stats)
 
+@app.route('/api/ai-suggest-response', methods=['POST'])
+def ai_suggest_response():
+    """API endpoint for AI-powered response suggestions"""
+    data = request.get_json()
+    response_id = data.get('response_id')
+    
+    if not response_id:
+        return jsonify({"error": "Response ID is required"}), 400
+    
+    # Get the stakeholder response
+    stakeholder_response = StakeholderResponse.query.get_or_404(response_id)
+    
+    # Get project data for AI context
+    project = stakeholder_response.project
+    project_data = {
+        'name': project.name,
+        'description': project.description,
+        'change_strategy': project.change_strategy,
+        'key_messages': project.key_messages,
+        'project_start_date': project.project_start_date,
+        'communication_start_date': project.communication_start_date,
+        'go_live_date': project.go_live_date,
+        'assessment_end_date': project.assessment_end_date
+    }
+    
+    # Get existing FAQs for context
+    existing_faqs = get_existing_faqs(project.id)
+    
+    # Generate AI response suggestion
+    ai_suggestion = generate_ai_response_suggestion(
+        concern_text=stakeholder_response.concern,
+        stakeholder_mental_model=stakeholder_response.mental_model,
+        project_data=project_data,
+        existing_faqs=existing_faqs
+    )
+    
+    return jsonify(ai_suggestion)
+
 # Initialize database
 with app.app_context():
     db.create_all()
