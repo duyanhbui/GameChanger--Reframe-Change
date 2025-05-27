@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Change Management Assessment{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i data-feather="target" class="me-3"></i>
+                    Discover Your Change Leadership Style
+                </h1>
+                <p class="lead mb-5">
+                    Understanding how you approach organizational change is crucial for successful transformation. 
+                    Our assessment identifies your unique mental model and provides personalized insights to enhance 
+                    your change management effectiveness.
+                </p>
+                <a href="{{ url_for('assessment') }}" class="btn btn-primary btn-lg px-5 py-3">
+                    <i data-feather="play-circle" class="me-2"></i>
+                    Start Assessment
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i data-feather="users" class="text-primary"></i>
+                    </div>
+                    <h5 class="card-title">16 Mental Models</h5>
+                    <p class="card-text">
+                        Discover which of 16 distinct change management mental models best describes your approach to organizational transformation.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i data-feather="clock" class="text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Quick Assessment</h5>
+                    <p class="card-text">
+                        Complete our brief 3-question assessment in under 5 minutes and get immediate, personalized insights.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i data-feather="trending-up" class="text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Actionable Insights</h5>
+                    <p class="card-text">
+                        Receive specific recommendations for leveraging your strengths and addressing potential challenges in change leadership.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-secondary py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h3 class="mb-4">
+                    <i data-feather="lightbulb" class="me-2"></i>
+                    Why Understanding Your Mental Model Matters
+                </h3>
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <i data-feather="check-circle" class="text-success me-2"></i>
+                        <strong>Self-Awareness:</strong> Understand your natural tendencies and blind spots
+                    </li>
+                    <li class="mb-3">
+                        <i data-feather="check-circle" class="text-success me-2"></i>
+                        <strong>Team Dynamics:</strong> Improve collaboration with diverse change styles
+                    </li>
+                    <li class="mb-3">
+                        <i data-feather="check-circle" class="text-success me-2"></i>
+                        <strong>Leadership Growth:</strong> Develop targeted skills for change management
+                    </li>
+                    <li class="mb-3">
+                        <i data-feather="check-circle" class="text-success me-2"></i>
+                        <strong>Organizational Impact:</strong> Drive more effective transformation initiatives
+                    </li>
+                </ul>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i data-feather="compass" class="me-2"></i>
+                            Ready to Get Started?
+                        </h5>
+                        <p class="card-text">
+                            Take the first step toward better change leadership. Our assessment is designed for 
+                            business professionals, managers, and change agents who want to maximize their impact.
+                        </p>
+                        <a href="{{ url_for('assessment') }}" class="btn btn-primary">
+                            Begin Assessment
+                            <i data-feather="arrow-right" class="ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

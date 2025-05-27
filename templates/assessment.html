@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment - Change Management Assessment{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i data-feather="clipboard" class="me-2"></i>
+                        Change Management Assessment
+                    </h3>
+                    <p class="mb-0 mt-2">Answer the following questions to discover your mental model</p>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Progress indicator -->
+                        <div class="progress mb-4" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+                        </div>
+                        
+                        <!-- Question 1 -->
+                        <div class="question-section mb-5">
+                            <h5 class="mb-3">
+                                <span class="badge bg-secondary me-2">1</span>
+                                {{ form.question1.label.text }}
+                            </h5>
+                            
+                            {% for subfield in form.question1 %}
+                                <div class="form-check mb-3">
+                                    {{ subfield(class="form-check-input question-radio", **{"data-question": "1"}) }}
+                                    <label class="form-check-label" for="{{ subfield.id }}">
+                                        {{ subfield.label.text }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                            
+                            {% if form.question1.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.question1.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Question 2 -->
+                        <div class="question-section mb-5">
+                            <h5 class="mb-3">
+                                <span class="badge bg-secondary me-2">2</span>
+                                {{ form.question2.label.text }}
+                            </h5>
+                            
+                            {% for subfield in form.question2 %}
+                                <div class="form-check mb-3">
+                                    {{ subfield(class="form-check-input question-radio", **{"data-question": "2"}) }}
+                                    <label class="form-check-label" for="{{ subfield.id }}">
+                                        {{ subfield.label.text }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                            
+                            {% if form.question2.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.question2.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Question 3 -->
+                        <div class="question-section mb-5">
+                            <h5 class="mb-3">
+                                <span class="badge bg-secondary me-2">3</span>
+                                {{ form.question3.label.text }}
+                            </h5>
+                            
+                            {% for subfield in form.question3 %}
+                                <div class="form-check mb-3">
+                                    {{ subfield(class="form-check-input question-radio", **{"data-question": "3"}) }}
+                                    <label class="form-check-label" for="{{ subfield.id }}">
+                                        {{ subfield.label.text }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                            
+                            {% if form.question3.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.question3.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Additional Comments -->
+                        <div class="question-section mb-4">
+                            <h5 class="mb-3">
+                                <i data-feather="message-square" class="me-2"></i>
+                                {{ form.additional_comments.label.text }}
+                            </h5>
+                            {{ form.additional_comments(class="form-control", rows="4") }}
+                            <div class="form-text">
+                                Share any specific challenges or insights about change management in your organization.
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg", id="submitBtn", disabled=True) }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Text -->
+            <div class="mt-4 text-center">
+                <small class="text-muted">
+                    <i data-feather="shield" class="me-1"></i>
+                    Your responses are stored securely and used only for assessment purposes.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

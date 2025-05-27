@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}{{ mental_model.name }} - Assessment Results{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8 text-center">
+            <div class="result-header">
+                <div class="mb-4">
+                    <i data-feather="award" class="result-icon text-primary"></i>
+                </div>
+                <h1 class="display-5 fw-bold mb-3">{{ mental_model.name }}</h1>
+                <p class="lead">{{ mental_model.description }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Strengths -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i data-feather="trending-up" class="me-2"></i>
+                        Your Strengths
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        {% for strength in mental_model.strengths %}
+                            <li class="mb-3">
+                                <i data-feather="check-circle" class="text-success me-2"></i>
+                                {{ strength }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Challenges -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i data-feather="alert-triangle" class="me-2"></i>
+                        Potential Challenges
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        {% for challenge in mental_model.challenges %}
+                            <li class="mb-3">
+                                <i data-feather="alert-circle" class="text-warning me-2"></i>
+                                {{ challenge }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recommendations -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i data-feather="lightbulb" class="me-2"></i>
+                        Recommendations for Growth
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for recommendation in mental_model.recommendations %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-info rounded-pill">{{ loop.index }}</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        {{ recommendation }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <i data-feather="compass" class="me-2"></i>
+                        Next Steps
+                    </h5>
+                    <p class="card-text mb-4">
+                        Want to explore more about change management or share these results?
+                    </p>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('assessment') }}" class="btn btn-outline-light">
+                            <i data-feather="refresh-cw" class="me-2"></i>
+                            Take Again
+                        </a>
+                        <button class="btn btn-outline-light" onclick="printResults()">
+                            <i data-feather="printer" class="me-2"></i>
+                            Print Results
+                        </button>
+                        <button class="btn btn-outline-light" onclick="shareResults()">
+                            <i data-feather="share-2" class="me-2"></i>
+                            Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if response %}
+    <!-- Timestamp -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <small class="text-muted">
+                <i data-feather="clock" class="me-1"></i>
+                Assessment completed on {{ response.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
+            </small>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Print Styles -->
+<style media="print">
+    .navbar, footer, .btn-group { display: none !important; }
+    .card { border: 1px solid #000 !important; }
+    .card-header { background: #f8f9fa !important; color: #000 !important; }
+</style>
+{% endblock %}
