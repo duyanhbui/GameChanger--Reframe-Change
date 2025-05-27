@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Assessment History - {{ response.name }}</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold">
+                <i data-feather="user" class="me-3"></i>
+                Welcome, {{ response.name }}!
+            </h1>
+            <p class="lead">Your Change Management Assessment History</p>
+        </div>
+
+        <!-- Current Assessment -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i data-feather="star" class="me-2"></i>
+                            Your Mental Model: {{ response.mental_model }}
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Project:</h6>
+                                <p>{{ response.project.name }}</p>
+                                
+                                <h6 class="text-primary">Department:</h6>
+                                <p>{{ response.department or 'Not specified' }}</p>
+                                
+                                <h6 class="text-primary">Assessment Date:</h6>
+                                <p>{{ response.timestamp.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Your Approach:</h6>
+                                <p><strong>Change Feeling:</strong> {{ response.feeling.title() }}</p>
+                                <p><strong>Working Style:</strong> {{ response.style.title() }}</p>
+                                <p><strong>Focus Areas:</strong> {{ response.focus_areas.replace(',', ', ').title() }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if response.concern %}
+                        <div class="alert alert-info mt-3">
+                            <h6><i data-feather="message-circle" class="me-2"></i>Your Question/Concern:</h6>
+                            <p class="mb-0">{{ response.concern }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment History -->
+        {% if history|length > 1 %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="clock" class="me-2"></i>
+                            Assessment History
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for assessment in history %}
+                        {% if assessment.id != response.id %}
+                        <div class="border rounded p-3 mb-3">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 class="text-success">{{ assessment.project.name }}</h6>
+                                    <p class="mb-1"><strong>Mental Model:</strong> {{ assessment.mental_model }}</p>
+                                    <p class="mb-1"><strong>Date:</strong> {{ assessment.timestamp.strftime('%B %d, %Y') }}</p>
+                                    {% if assessment.concern %}
+                                    <p class="mb-0"><strong>Concern:</strong> {{ assessment.concern[:100] }}{% if assessment.concern|length > 100 %}...{% endif %}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <small class="text-muted">{{ assessment.feeling.title() }} | {{ assessment.style.title() }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Concern Status -->
+        {% if concern_assignments %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="help-circle" class="me-2"></i>
+                            Response Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for assignment in concern_assignments %}
+                        <div class="alert {% if assignment.status == 'responded' %}alert-success{% elif assignment.status == 'pending' %}alert-warning{% else %}alert-info{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        {% if assignment.status == 'responded' %}
+                                            <i data-feather="check-circle" class="me-2"></i>Responded
+                                        {% elif assignment.status == 'pending' %}
+                                            <i data-feather="clock" class="me-2"></i>In Progress
+                                        {% else %}
+                                            <i data-feather="info" class="me-2"></i>{{ assignment.status.title() }}
+                                        {% endif %}
+                                    </h6>
+                                    <p class="mb-0">{{ assignment.concern_text }}</p>
+                                    {% if assignment.response_text %}
+                                    <div class="mt-2 p-2 bg-light rounded">
+                                        <strong>Response:</strong> {{ assignment.response_text }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    {{ assignment.assigned_at.strftime('%b %d') }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="text-center">
+            <a href="/?project_id={{ response.project_id }}" class="btn btn-primary">
+                <i data-feather="refresh-cw" class="me-2"></i>
+                Take New Assessment
+            </a>
+            <a href="/opt-out/{{ response.id }}" class="btn btn-outline-secondary ms-2">
+                <i data-feather="x-circle" class="me-2"></i>
+                Opt Out of Updates
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-5 text-center">
+            <small class="text-muted">
+                Questions about your assessment? Contact your change management team.
+            </small>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>
