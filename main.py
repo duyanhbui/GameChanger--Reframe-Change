@@ -1,10 +1,38 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, date
+from werkzeug.utils import secure_filename
 import os
+import PyPDF2
+from dateutil import parser
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "change-management-key")
+
+# File upload configuration
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'pdf'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Create upload directory if it doesn't exist
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def extract_text_from_pdf(file_path):
+    """Extract text content from PDF file"""
+    try:
+        with open(file_path, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() + "\n"
+            return text.strip()
+    except Exception as e:
+        return f"Error reading PDF: {str(e)}"
 
 # Database setup
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///change_assessment.db")
@@ -60,6 +88,17 @@ class ChangeProject(db.Model):
     description = db.Column(db.Text)
     change_strategy = db.Column(db.Text)
     key_messages = db.Column(db.Text)
+    
+    # File uploads
+    strategy_document_path = db.Column(db.String(500))  # Path to uploaded PDF
+    strategy_document_name = db.Column(db.String(200))  # Original filename
+    
+    # Key dates
+    project_start_date = db.Column(db.Date)
+    go_live_date = db.Column(db.Date)
+    communication_start_date = db.Column(db.Date)
+    assessment_end_date = db.Column(db.Date)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
 
@@ -335,6 +374,38 @@ def create_project():
         project.key_messages = request.form.get("key_messages")
         project.is_active = True
         
+        # Handle key dates
+        try:
+            if request.form.get("project_start_date"):
+                project.project_start_date = parser.parse(request.form.get("project_start_date")).date()
+            if request.form.get("go_live_date"):
+                project.go_live_date = parser.parse(request.form.get("go_live_date")).date()
+            if request.form.get("communication_start_date"):
+                project.communication_start_date = parser.parse(request.form.get("communication_start_date")).date()
+            if request.form.get("assessment_end_date"):
+                project.assessment_end_date = parser.parse(request.form.get("assessment_end_date")).date()
+        except ValueError:
+            flash("Invalid date format. Please use valid dates.", "error")
+            return render_template("create_project.html")
+        
+        # Handle file upload
+        if 'strategy_document' in request.files:
+            file = request.files['strategy_document']
+            if file and file.filename != '' and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                filename = timestamp + filename
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                
+                # Extract text content from PDF
+                extracted_text = extract_text_from_pdf(file_path)
+                if not project.change_strategy:
+                    project.change_strategy = extracted_text[:1000] + "..." if len(extracted_text) > 1000 else extracted_text
+                
+                project.strategy_document_path = file_path
+                project.strategy_document_name = file.filename
+        
         try:
             db.session.add(project)
             db.session.commit()
@@ -345,6 +416,16 @@ def create_project():
             flash("Error creating project. Please try again.", "error")
     
     return render_template("create_project.html")
+
+@app.route("/manager/projects/<int:project_id>/document")
+def view_project_document(project_id):
+    """View uploaded project document"""
+    project = ChangeProject.query.get_or_404(project_id)
+    if project.strategy_document_path and os.path.exists(project.strategy_document_path):
+        return send_file(project.strategy_document_path, as_attachment=False)
+    else:
+        flash("Document not found", "error")
+        return redirect(url_for("project_management"))
 
 @app.route("/manager/projects/<int:project_id>/toggle", methods=["POST"])
 def toggle_project_status(project_id):
