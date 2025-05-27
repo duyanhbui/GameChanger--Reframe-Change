@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Manager Dashboard</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-6">
+                    <i data-feather="activity" class="me-3"></i>
+                    Change Manager Dashboard
+                </h1>
+                <p class="lead">Stakeholder pulse check insights and analytics</p>
+            </div>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <div class="display-4 fw-bold">{{ total_responses }}</div>
+                        <h5>Total Responses</h5>
+                        <small>Active stakeholder inputs</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <div class="display-4 fw-bold">{{ model_counts|length }}</div>
+                        <h5>Active Models</h5>
+                        <small>Different mental models represented</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <div class="display-4 fw-bold">{{ concerns|length }}</div>
+                        <h5>Open Concerns</h5>
+                        <small>Questions requiring SME response</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <div class="display-4 fw-bold">16</div>
+                        <h5>KB16 Models</h5>
+                        <small>Total possible mental models</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if total_responses > 0 %}
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <!-- Mental Model Distribution -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="pie-chart" class="me-2"></i>
+                            Mental Model Distribution
+                        </h4>
+                        <small class="text-muted">How your stakeholders approach change</small>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="mentalModelChart" height="100"></canvas>
+                        
+                        <!-- Model breakdown -->
+                        <div class="mt-4">
+                            {% for model, count in model_counts.items() %}
+                                {% set percentage = (count / total_responses * 100)|round(1) %}
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>{{ model }}</strong>
+                                        <span class="badge bg-primary">{{ count }} ({{ percentage }}%)</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar" style="width: {{ percentage }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Focus Areas -->
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="target" class="me-2"></i>
+                            Thinking Styles
+                        </h4>
+                        <small class="text-muted">What stakeholders focus on</small>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="focusChart" height="150"></canvas>
+                        
+                        <!-- Focus breakdown -->
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span><span class="badge bg-primary me-2">Blue</span>Proof</span>
+                                <strong>{{ focus_counts.proof }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span><span class="badge bg-success me-2">Green</span>Process</span>
+                                <strong>{{ focus_counts.process }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span><span class="badge bg-danger me-2">Red</span>People</span>
+                                <strong>{{ focus_counts.people }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><span class="badge bg-warning me-2">Yellow</span>Possibilities</span>
+                                <strong>{{ focus_counts.possibilities }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Team Insights -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="users" class="me-2"></i>
+                            Team Engagement Insights
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-success">Team Strengths:</h6>
+                                <ul class="list-unstyled">
+                                    {% if focus_counts.people > focus_counts.proof and focus_counts.people > focus_counts.process %}
+                                        <li><i data-feather="heart" class="text-success me-2"></i>Strong people focus - team cares about relationships</li>
+                                    {% endif %}
+                                    {% if focus_counts.possibilities > 0 %}
+                                        <li><i data-feather="star" class="text-success me-2"></i>Future-thinking stakeholders present</li>
+                                    {% endif %}
+                                    {% if model_counts.get('The Facilitator', 0) > 0 or model_counts.get('The Humanitarian', 0) > 0 %}
+                                        <li><i data-feather="users" class="text-success me-2"></i>Natural collaborators in the team</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-warning">Areas to Address:</h6>
+                                <ul class="list-unstyled">
+                                    {% if model_counts.get('The Sceptic', 0) > 0 or model_counts.get('The Forecaster', 0) > 0 %}
+                                        <li><i data-feather="alert-triangle" class="text-warning me-2"></i>Address concerns from analytical thinkers</li>
+                                    {% endif %}
+                                    {% if focus_counts.proof > focus_counts.possibilities * 2 %}
+                                        <li><i data-feather="search" class="text-warning me-2"></i>Provide more evidence and data</li>
+                                    {% endif %}
+                                    {% if concerns|length > total_responses * 0.7 %}
+                                        <li><i data-feather="message-circle" class="text-warning me-2"></i>High volume of concerns - increase communication</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <h6 class="mb-2">
+                                <i data-feather="compass" class="me-2"></i>
+                                Recommended Team Approach:
+                            </h6>
+                            <p class="mb-0">
+                                {% if focus_counts.people + focus_counts.possibilities > focus_counts.proof + focus_counts.process %}
+                                    Focus on relationship building and vision sharing. Your team values connection and future possibilities.
+                                {% else %}
+                                    Emphasize facts, data, and clear implementation plans. Your team wants evidence and structure.
+                                {% endif %}
+                                Ensure concerns are addressed promptly to maintain engagement.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stakeholder Concerns -->
+        {% if concerns %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">
+                                <i data-feather="message-square" class="me-2"></i>
+                                Stakeholder Concerns & Questions
+                            </h4>
+                            <small class="text-muted">Requiring SME response</small>
+                        </div>
+                        <button class="btn btn-primary btn-sm">
+                            <i data-feather="send" class="me-1"></i>
+                            Forward to SMEs
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {% for concern in concerns %}
+                        <div class="border-start border-3 border-primary ps-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <strong>{{ concern.name }}</strong>
+                                <span class="badge bg-secondary">{{ concern.model }}</span>
+                            </div>
+                            <p class="mb-2">{{ concern.concern }}</p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i data-feather="reply" class="me-1"></i>
+                                    Assign to SME
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i data-feather="archive" class="me-1"></i>
+                                    Mark as FAQ
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Recent Responses -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="clock" class="me-2"></i>
+                            Recent Stakeholder Responses
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Stakeholder</th>
+                                        <th>Department</th>
+                                        <th>Mental Model</th>
+                                        <th>Focus Areas</th>
+                                        <th>Frequency</th>
+                                        <th>Submitted</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for response in responses[:15] %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ response.name }}</strong><br>
+                                            <small class="text-muted">{{ response.email }}</small>
+                                        </td>
+                                        <td>{{ response.department or 'Not specified' }}</td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ response.mental_model }}</span>
+                                        </td>
+                                        <td>
+                                            {% for focus in response.focus_areas.split(',') if response.focus_areas %}
+                                                {% if focus.strip() == 'proof' %}
+                                                    <span class="badge bg-primary me-1">Blue</span>
+                                                {% elif focus.strip() == 'process' %}
+                                                    <span class="badge bg-success me-1">Green</span>
+                                                {% elif focus.strip() == 'people' %}
+                                                    <span class="badge bg-danger me-1">Red</span>
+                                                {% elif focus.strip() == 'possibilities' %}
+                                                    <span class="badge bg-warning me-1">Yellow</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            <small>{{ response.frequency_preference }}</small>
+                                        </td>
+                                        <td>
+                                            <small>{{ response.timestamp.strftime('%m/%d %H:%M') }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" title="Send Tailored Response">
+                                                    <i data-feather="mail"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="View Details">
+                                                    <i data-feather="eye"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i data-feather="inbox" class="text-muted mb-3" style="width: 64px; height: 64px;"></i>
+                        <h4>No Responses Yet</h4>
+                        <p class="text-muted mb-4">
+                            No stakeholder pulse check responses have been submitted yet. 
+                            Share the assessment link with your team to start gathering insights.
+                        </p>
+                        <a href="/" class="btn btn-primary">
+                            <i data-feather="link" class="me-2"></i>
+                            View Stakeholder Form
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        feather.replace();
+        
+        // Mental Model Chart
+        {% if total_responses > 0 %}
+        const mentalModelCtx = document.getElementById('mentalModelChart').getContext('2d');
+        new Chart(mentalModelCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for model, count in model_counts.items() %}'{{ model }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Stakeholders',
+                    data: [{% for model, count in model_counts.items() %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Focus Areas Chart
+        const focusCtx = document.getElementById('focusChart').getContext('2d');
+        new Chart(focusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Proof (Blue)', 'Process (Green)', 'People (Red)', 'Possibilities (Yellow)'],
+                datasets: [{
+                    data: [{{ focus_counts.proof }}, {{ focus_counts.process }}, {{ focus_counts.people }}, {{ focus_counts.possibilities }}],
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.8)',
+                        'rgba(25, 135, 84, 0.8)',
+                        'rgba(220, 53, 69, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+</body>
+</html>
