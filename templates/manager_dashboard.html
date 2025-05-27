@@ -54,51 +54,181 @@
             </div>
         </div>
         
-        <!-- Summary Cards -->
+        <!-- Enhanced Summary Cards -->
         <div class="row mb-4">
-            <div class="col-md-3 mb-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body text-center">
-                        <div class="display-4 fw-bold">{{ total_responses }}</div>
-                        <h5>Total Responses</h5>
-                        <small>Active stakeholder inputs</small>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title mb-2">Total Responses</h6>
+                                <h2 class="mb-1">{{ total_responses }}</h2>
+                                <small><i data-feather="trending-up" class="me-1" style="width: 14px; height: 14px;"></i>Active engagement</small>
+                            </div>
+                            <i data-feather="users" style="width: 36px; height: 36px; opacity: 0.7;"></i>
+                        </div>
+                        <div class="progress mt-3" style="height: 4px;">
+                            <div class="progress-bar bg-light" style="width: {{ (total_responses / 20 * 100)|round(0) if total_responses < 20 else 100 }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body text-center">
-                        <div class="display-4 fw-bold">{{ model_counts|length }}</div>
-                        <h5>Active Models</h5>
-                        <small>Different mental models represented</small>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title mb-2">Change Ready</h6>
+                                {% if total_responses > 0 %}
+                                    <h2 class="mb-1">{{ ((sentiment_analysis.eager / total_responses) * 100)|round|int }}%</h2>
+                                    <small>{{ sentiment_analysis.eager }} eager stakeholders</small>
+                                {% else %}
+                                    <h2 class="mb-1">0%</h2>
+                                    <small>No data yet</small>
+                                {% endif %}
+                            </div>
+                            <i data-feather="trending-up" style="width: 36px; height: 36px; opacity: 0.7;"></i>
+                        </div>
+                        <div class="progress mt-3" style="height: 4px;">
+                            <div class="progress-bar bg-light" style="width: {{ ((sentiment_analysis.eager / total_responses) * 100)|round(0) if total_responses > 0 else 0 }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card bg-warning text-dark">
-                    <div class="card-body text-center">
-                        <div class="display-4 fw-bold">{{ concerns|length }}</div>
-                        <h5>Open Concerns</h5>
-                        <small>Questions requiring SME response</small>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card bg-warning text-dark h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title mb-2">Need Support</h6>
+                                {% if total_responses > 0 %}
+                                    <h2 class="mb-1">{{ ((sentiment_analysis.cautious / total_responses) * 100)|round|int }}%</h2>
+                                    <small>{{ sentiment_analysis.cautious }} cautious stakeholders</small>
+                                {% else %}
+                                    <h2 class="mb-1">0%</h2>
+                                    <small>No data yet</small>
+                                {% endif %}
+                            </div>
+                            <i data-feather="alert-triangle" style="width: 36px; height: 36px; opacity: 0.7;"></i>
+                        </div>
+                        <div class="progress mt-3" style="height: 4px;">
+                            <div class="progress-bar bg-dark" style="width: {{ ((sentiment_analysis.cautious / total_responses) * 100)|round(0) if total_responses > 0 else 0 }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body text-center">
-                        {% if total_responses > 0 %}
-                            <div class="display-4 fw-bold">{{ ((sentiment_analysis.eager / total_responses) * 100)|round|int }}%</div>
-                            <h5>Eager Sentiment</h5>
-                        {% else %}
-                            <div class="display-4 fw-bold">0%</div>
-                            <h5>Sentiment</h5>
-                        {% endif %}
-                        <small>Positive change readiness</small>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card bg-info text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title mb-2">Active Concerns</h6>
+                                <h2 class="mb-1">{{ concerns|length }}</h2>
+                                <small><i data-feather="clock" class="me-1" style="width: 14px; height: 14px;"></i>Need attention</small>
+                            </div>
+                            <i data-feather="message-circle" style="width: 36px; height: 36px; opacity: 0.7;"></i>
+                        </div>
+                        <div class="progress mt-3" style="height: 4px;">
+                            <div class="progress-bar bg-light" style="width: {{ (concerns|length / 5 * 100)|round(0) if concerns|length < 5 else 100 }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Progress Tracking Section -->
+        <div class="row mb-4">
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="bar-chart-2" class="me-2"></i>
+                            Change Readiness Overview
+                        </h5>
+                        <small class="text-muted">Real-time sentiment and engagement tracking</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <canvas id="sentimentChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="h-100 d-flex flex-column justify-content-center">
+                                    <div class="mb-3">
+                                        <h6 class="text-success mb-1">High Engagement</h6>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-success" style="width: {{ ((sentiment_analysis.eager / total_responses) * 100)|round(0) if total_responses > 0 else 0 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ sentiment_analysis.eager }} stakeholders ready for change</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6 class="text-warning mb-1">Moderate Caution</h6>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-warning" style="width: {{ ((sentiment_analysis.cautious / total_responses) * 100)|round(0) if total_responses > 0 else 0 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ sentiment_analysis.cautious }} stakeholders need support</small>
+                                    </div>
+                                    <div class="alert alert-info mb-0">
+                                        <strong>Insight:</strong> 
+                                        {% if total_responses > 0 %}
+                                            {% if ((sentiment_analysis.eager / total_responses) * 100) > 60 %}
+                                                Strong change readiness detected!
+                                            {% elif ((sentiment_analysis.cautious / total_responses) * 100) > 60 %}
+                                                Additional support may be needed.
+                                            {% else %}
+                                                Balanced sentiment across stakeholders.
+                                            {% endif %}
+                                        {% else %}
+                                            Collect more responses for insights.
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="activity" class="me-2"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="list-group list-group-flush flex-grow-1">
+                            <a href="/manager/concerns" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i data-feather="message-circle" class="me-2"></i>
+                                    Manage Concerns
+                                </div>
+                                {% if concerns|length > 0 %}
+                                    <span class="badge bg-warning rounded-pill">{{ concerns|length }}</span>
+                                {% endif %}
+                            </a>
+                            <a href="/manager/projects" class="list-group-item list-group-item-action">
+                                <i data-feather="folder" class="me-2"></i>
+                                Project Settings
+                            </a>
+                            <a href="/manager/generate-faq" class="list-group-item list-group-item-action">
+                                <i data-feather="help-circle" class="me-2"></i>
+                                Generate FAQ
+                            </a>
+                            <a href="/manager/export" class="list-group-item list-group-item-action">
+                                <i data-feather="download" class="me-2"></i>
+                                Export Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Action Bar -->
         <div class="row mb-4">
             <div class="col-12">
@@ -617,6 +747,109 @@
                 window.location.href = '/manager';
             }
         }
+        
+        // Initialize Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sentiment Chart
+            const sentimentCtx = document.getElementById('sentimentChart');
+            if (sentimentCtx) {
+                new Chart(sentimentCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Change Ready', 'Need Support'],
+                        datasets: [{
+                            data: [{{ sentiment_analysis.eager }}, {{ sentiment_analysis.cautious }}],
+                            backgroundColor: ['#198754', '#ffc107'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+            
+            // Mental Model Chart
+            const mentalModelCtx = document.getElementById('mentalModelChart');
+            if (mentalModelCtx) {
+                new Chart(mentalModelCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [{% for model in model_counts.keys() %}'{{ model }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                        datasets: [{
+                            label: 'Stakeholders',
+                            data: [{% for count in model_counts.values() %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                            backgroundColor: [
+                                '#0d6efd', '#6f42c1', '#d63384', '#dc3545',
+                                '#fd7e14', '#ffc107', '#198754', '#20c997',
+                                '#0dcaf0', '#6c757d', '#495057', '#f8f9fa'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Focus Areas Chart
+            const focusCtx = document.getElementById('focusChart');
+            if (focusCtx) {
+                new Chart(focusCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Proof', 'Process', 'People', 'Possibilities'],
+                        datasets: [{
+                            label: 'Focus Areas',
+                            data: [{{ focus_counts.proof }}, {{ focus_counts.process }}, {{ focus_counts.people }}, {{ focus_counts.possibilities }}],
+                            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                            borderColor: '#0d6efd',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#0d6efd'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
         
         function showStakeholderLink() {
             const modal = new bootstrap.Modal(document.getElementById('stakeholderLinkModal'));
