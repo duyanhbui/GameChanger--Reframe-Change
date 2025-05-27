@@ -64,12 +64,45 @@ def generate_ai_response_suggestion(concern_text, stakeholder_mental_model, proj
         }
         
     except Exception as e:
+        error_message = str(e)
+        
+        # Provide helpful guidance based on the error type
+        if "quota" in error_message.lower() or "429" in error_message:
+            guidance = "Your OpenAI API quota has been reached. You can continue using the manual response feature or check your OpenAI billing settings to increase your quota."
+        elif "api_key" in error_message.lower() or "401" in error_message:
+            guidance = "There's an issue with your API key. Please check your OpenAI API key configuration."
+        else:
+            guidance = f"Error connecting to AI service: {error_message}"
+        
+        # Provide manual guidance based on mental model
+        manual_guidance = generate_manual_guidance(mental_model_data) if mental_model_data else ""
+        
         return {
             "suggested_response": "",
-            "tone_notes": f"Error generating AI suggestion: {str(e)}",
-            "key_points": [],
+            "tone_notes": guidance,
+            "key_points": [manual_guidance] if manual_guidance else [],
             "error": str(e)
         }
+
+
+def generate_manual_guidance(mental_model_data):
+    """Provide manual guidance based on mental model when AI is unavailable"""
+    if not mental_model_data:
+        return ""
+    
+    name = mental_model_data.get('name', '')
+    strengths = mental_model_data.get('strengths', [])
+    challenges = mental_model_data.get('challenges', [])
+    
+    guidance = f"Manual guidance for {name}: "
+    
+    if strengths:
+        guidance += f"Leverage their strengths: {strengths[0]}. "
+    
+    if challenges:
+        guidance += f"Address potential concerns: {challenges[0]}."
+    
+    return guidance
 
 
 def build_response_context(concern_text, mental_model_data, project_data, existing_faqs):
