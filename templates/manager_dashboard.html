@@ -12,12 +12,33 @@
     <div class="container-fluid py-4">
         <!-- Header -->
         <div class="row mb-4">
-            <div class="col-12">
+            <div class="col-md-8">
                 <h1 class="display-6">
                     <i data-feather="activity" class="me-3"></i>
                     Change Manager Dashboard
                 </h1>
                 <p class="lead">Stakeholder pulse check insights and analytics</p>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <label class="form-label"><strong>Project Filter:</strong></label>
+                        <select class="form-select" id="projectFilter" onchange="filterByProject()">
+                            <option value="">All Projects</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}" {% if selected_project and selected_project.id == project.id %}selected{% endif %}>
+                                    {{ project.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if selected_project %}
+                            <small class="text-muted mt-2 d-block">
+                                <i data-feather="info" class="me-1"></i>
+                                Showing data for: {{ selected_project.name }}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -77,6 +98,10 @@
                                 Manager Actions
                             </h5>
                             <div class="btn-group" role="group">
+                                <a href="/manager/projects" class="btn btn-outline-info">
+                                    <i data-feather="folder" class="me-1"></i>
+                                    Manage Projects
+                                </a>
                                 <a href="/manager/export" class="btn btn-outline-primary">
                                     <i data-feather="download" class="me-1"></i>
                                     Export Data
@@ -545,6 +570,17 @@
             }
             
             return container;
+        }
+        
+        function filterByProject() {
+            const select = document.getElementById('projectFilter');
+            const projectId = select.value;
+            
+            if (projectId) {
+                window.location.href = `/manager?project_id=${projectId}`;
+            } else {
+                window.location.href = '/manager';
+            }
         }
     </script>
 </body>

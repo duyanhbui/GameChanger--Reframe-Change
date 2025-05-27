@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Project - Change Management</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="display-6">
+                            <i data-feather="plus-circle" class="me-3"></i>
+                            Create New Project
+                        </h1>
+                        <p class="lead">Set up a new change management project</p>
+                    </div>
+                    <a href="/manager/projects" class="btn btn-outline-secondary">
+                        <i data-feather="arrow-left" class="me-2"></i>
+                        Back to Projects
+                    </a>
+                </div>
+                
+                <!-- Project Form -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">
+                            <i data-feather="settings" class="me-2"></i>
+                            Project Details
+                        </h3>
+                    </div>
+                    
+                    <div class="card-body">
+                        <form method="POST">
+                            <!-- Project Name -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <strong>Project Name</strong>
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" name="name" required 
+                                       placeholder="e.g., Digital Transformation Initiative">
+                                <div class="form-text">
+                                    Choose a clear, descriptive name for your change project
+                                </div>
+                            </div>
+                            
+                            <!-- Description -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <strong>Project Description</strong>
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" name="description" rows="3" required
+                                          placeholder="Brief overview of the change initiative, its scope, and objectives..."></textarea>
+                                <div class="form-text">
+                                    Provide a concise description that stakeholders will understand
+                                </div>
+                            </div>
+                            
+                            <!-- Change Strategy -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <strong>Change Strategy</strong>
+                                </label>
+                                <textarea class="form-control" name="change_strategy" rows="4"
+                                          placeholder="Outline your approach to managing this change, including key phases, stakeholder groups, and success metrics..."></textarea>
+                                <div class="form-text">
+                                    Document your strategic approach to this change initiative
+                                </div>
+                            </div>
+                            
+                            <!-- Key Messages -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <strong>Key Messages</strong>
+                                </label>
+                                <textarea class="form-control" name="key_messages" rows="4"
+                                          placeholder="Core messages you want to communicate to stakeholders about this change..."></textarea>
+                                <div class="form-text">
+                                    These messages will help guide communications and responses to stakeholders
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/manager/projects" class="btn btn-outline-secondary me-md-2">
+                                    <i data-feather="x" class="me-2"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="check" class="me-2"></i>
+                                    Create Project
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Tips Card -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="lightbulb" class="me-2"></i>
+                            Project Setup Tips
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Best Practices:</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i data-feather="check-circle" class="text-success me-2"></i>
+                                        Use clear, stakeholder-friendly language
+                                    </li>
+                                    <li class="mb-2">
+                                        <i data-feather="check-circle" class="text-success me-2"></i>
+                                        Define specific, measurable outcomes
+                                    </li>
+                                    <li class="mb-2">
+                                        <i data-feather="check-circle" class="text-success me-2"></i>
+                                        Include timeline and milestone information
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-info">After Creation:</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i data-feather="arrow-right" class="text-info me-2"></i>
+                                        Share assessment link with stakeholders
+                                    </li>
+                                    <li class="mb-2">
+                                        <i data-feather="arrow-right" class="text-info me-2"></i>
+                                        Monitor responses in the dashboard
+                                    </li>
+                                    <li class="mb-2">
+                                        <i data-feather="arrow-right" class="text-info me-2"></i>
+                                        Assign SMEs to address concerns
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>feather.replace();</script>
+</body>
+</html>

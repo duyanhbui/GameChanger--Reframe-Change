@@ -19,6 +19,9 @@ class StakeholderResponse(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Project association
+    project_id = db.Column(db.Integer, db.ForeignKey('change_project.id'), nullable=False)
+    
     # Basic info
     name = db.Column(db.String(100))
     email = db.Column(db.String(120))
@@ -36,6 +39,9 @@ class StakeholderResponse(db.Model):
     # Engagement tracking
     opted_out = db.Column(db.Boolean, default=False)
     frequency_preference = db.Column(db.String(20), default="fortnightly")
+    
+    # Relationship
+    project = db.relationship('ChangeProject', backref='responses')
     
     def __repr__(self):
         return f'<StakeholderResponse {self.name}: {self.mental_model}>'
@@ -99,7 +105,24 @@ def assign_model(feeling, style, focus_areas):
 @app.route("/")
 def index():
     """Stakeholder assessment form"""
-    return render_template("stakeholder_form.html")
+    # Get project from URL parameter or use default
+    project_id = request.args.get('project_id', type=int)
+    if project_id:
+        project = ChangeProject.query.get_or_404(project_id)
+    else:
+        # Use most recent active project or create default
+        project = ChangeProject.query.filter_by(is_active=True).first()
+        if not project:
+            project = ChangeProject(
+                name="Default Change Project",
+                description="Default project for change management assessments",
+                change_strategy="Assessment collection for organizational change",
+                key_messages="Your input helps us understand and support you during this change."
+            )
+            db.session.add(project)
+            db.session.commit()
+    
+    return render_template("stakeholder_form.html", project=project)
 
 @app.route("/submit", methods=["POST"])
 def submit_assessment():
@@ -113,22 +136,23 @@ def submit_assessment():
     focus_areas = ",".join(request.form.getlist("focus"))
     concern = request.form.get("concern", "")
     frequency = request.form.get("frequency", "fortnightly")
+    project_id = request.form.get("project_id", type=int)
     
     # Assign mental model
     mental_model = assign_model(feeling, style, focus_areas)
     
     # Save to database
-    response = StakeholderResponse(
-        name=name,
-        email=email,
-        department=department,
-        feeling=feeling,
-        style=style,
-        focus_areas=focus_areas,
-        concern=concern,
-        mental_model=mental_model,
-        frequency_preference=frequency
-    )
+    response = StakeholderResponse()
+    response.project_id = project_id
+    response.name = name
+    response.email = email
+    response.department = department
+    response.feeling = feeling
+    response.style = style
+    response.focus_areas = focus_areas
+    response.concern = concern
+    response.mental_model = mental_model
+    response.frequency_preference = frequency
     
     try:
         db.session.add(response)
@@ -145,7 +169,17 @@ def submit_assessment():
 @app.route("/manager")
 def manager_dashboard():
     """Change manager dashboard"""
-    responses = StakeholderResponse.query.filter_by(opted_out=False).all()
+    # Get all projects for dropdown
+    projects = ChangeProject.query.filter_by(is_active=True).all()
+    selected_project_id = request.args.get('project_id', type=int)
+    
+    # Filter responses by project if specified
+    if selected_project_id:
+        responses = StakeholderResponse.query.filter_by(opted_out=False, project_id=selected_project_id).all()
+        selected_project = ChangeProject.query.get(selected_project_id)
+    else:
+        responses = StakeholderResponse.query.filter_by(opted_out=False).all()
+        selected_project = None
     
     # Calculate statistics
     total_responses = len(responses)
@@ -182,7 +216,8 @@ def manager_dashboard():
                 'model': response.mental_model,
                 'id': response.id,
                 'department': response.department,
-                'timestamp': response.timestamp
+                'timestamp': response.timestamp,
+                'project_name': response.project.name
             })
     
     # Generate engagement recommendations
@@ -196,7 +231,9 @@ def manager_dashboard():
                          concerns=concerns,
                          sentiment_analysis=sentiment_analysis,
                          department_breakdown=department_breakdown,
-                         recommendations=recommendations)
+                         recommendations=recommendations,
+                         projects=projects,
+                         selected_project=selected_project)
 
 def generate_engagement_recommendations(model_counts, focus_counts, sentiment_analysis, total_responses):
     """Generate actionable recommendations based on stakeholder data"""
@@ -281,10 +318,56 @@ def export_data():
     
     return jsonify(export_data)
 
+@app.route("/manager/projects")
+def project_management():
+    """Project management page"""
+    projects = ChangeProject.query.all()
+    return render_template("project_management.html", projects=projects)
+
+@app.route("/manager/projects/create", methods=["GET", "POST"])
+def create_project():
+    """Create new change project"""
+    if request.method == "POST":
+        project = ChangeProject()
+        project.name = request.form.get("name")
+        project.description = request.form.get("description")
+        project.change_strategy = request.form.get("change_strategy")
+        project.key_messages = request.form.get("key_messages")
+        project.is_active = True
+        
+        try:
+            db.session.add(project)
+            db.session.commit()
+            flash(f"Project '{project.name}' created successfully!", "success")
+            return redirect(url_for("project_management"))
+        except Exception as e:
+            db.session.rollback()
+            flash("Error creating project. Please try again.", "error")
+    
+    return render_template("create_project.html")
+
+@app.route("/manager/projects/<int:project_id>/toggle", methods=["POST"])
+def toggle_project_status(project_id):
+    """Toggle project active status"""
+    project = ChangeProject.query.get_or_404(project_id)
+    project.is_active = not project.is_active
+    db.session.commit()
+    
+    status = "activated" if project.is_active else "deactivated"
+    return jsonify({"status": "success", "message": f"Project {status}"})
+
 @app.route("/manager/generate-faq")
 def generate_faq():
     """Generate FAQ based on common concerns"""
-    responses = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None)).all()
+    project_id = request.args.get('project_id', type=int)
+    
+    if project_id:
+        responses = StakeholderResponse.query.filter(
+            StakeholderResponse.concern.isnot(None),
+            StakeholderResponse.project_id == project_id
+        ).all()
+    else:
+        responses = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None)).all()
     
     concerns_by_category = {}
     for response in responses:
