@@ -422,6 +422,7 @@ def get_stats():
 
 # Initialize database
 with app.app_context():
+    db.drop_all()  # Reset database to include new schema
     db.create_all()
 
 if __name__ == "__main__":
