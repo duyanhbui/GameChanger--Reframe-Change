@@ -656,6 +656,30 @@ def archive_concern(assignment_id):
     
     return jsonify({"status": "success", "message": "Concern archived"})
 
+@app.route("/manager/concerns/<int:response_id>/delete", methods=["DELETE"])
+def delete_unassigned_concern(response_id):
+    """Delete an unassigned concern"""
+    try:
+        # Check if the concern has any assignments
+        response = StakeholderResponse.query.get_or_404(response_id)
+        assignments = ConcernAssignment.query.filter_by(stakeholder_response_id=response_id).all()
+        
+        if assignments:
+            return jsonify({
+                'status': 'error', 
+                'message': 'Cannot delete a concern that has been assigned. Please archive it instead.'
+            }), 400
+        
+        # Only delete the concern text, keep the stakeholder response
+        response.concern = None
+        db.session.commit()
+        
+        return jsonify({'status': 'success', 'message': 'Concern deleted successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route("/manager/concerns/update-response", methods=["POST"])
 def update_response():
     """Update an existing response"""

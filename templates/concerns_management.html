@@ -71,16 +71,23 @@
                             </small>
                         </div>
                         <div class="col-md-4">
-                            <button type="button" class="btn btn-primary btn-sm me-2" 
-                                    onclick="showAssignModal({{ response.id }}, '{{ response.concern|replace("'", "\\'") }}')">
-                                <i data-feather="user-plus" class="me-1"></i>
-                                Assign to SME
-                            </button>
-                            <button type="button" class="btn btn-success btn-sm" 
-                                    onclick="showResponseModal({{ response.id }}, '{{ response.concern|replace("'", "\\'") }}')">
-                                <i data-feather="edit" class="me-1"></i>
-                                Respond Directly
-                            </button>
+                            <div class="btn-group-vertical d-grid gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" 
+                                        onclick="showAssignModal({{ response.id }}, '{{ response.concern|replace("'", "\\'") }}')">
+                                    <i data-feather="user-plus" class="me-1"></i>
+                                    Assign to SME
+                                </button>
+                                <button type="button" class="btn btn-success btn-sm" 
+                                        onclick="showResponseModal({{ response.id }}, '{{ response.concern|replace("'", "\\'") }}')">
+                                    <i data-feather="edit" class="me-1"></i>
+                                    Respond Directly
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                        onclick="deleteConcern({{ response.id }}, '{{ response.name or 'Anonymous' }}')">
+                                    <i data-feather="trash-2" class="me-1"></i>
+                                    Delete Concern
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -685,6 +692,29 @@
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Error adding to FAQ database');
+                });
+            }
+        }
+
+        function deleteConcern(responseId, stakeholderName) {
+            if (confirm(`Are you sure you want to delete this concern from ${stakeholderName}? This action cannot be undone.`)) {
+                fetch(`/manager/concerns/${responseId}/delete`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert('Error deleting concern: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting concern');
                 });
             }
         }
