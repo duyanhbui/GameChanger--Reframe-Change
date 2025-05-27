@@ -152,6 +152,8 @@ def manager_dashboard():
     model_counts = {}
     focus_counts = {"proof": 0, "process": 0, "people": 0, "possibilities": 0}
     concerns = []
+    sentiment_analysis = {"eager": 0, "cautious": 0}
+    department_breakdown = {}
     
     for response in responses:
         # Mental model distribution
@@ -164,21 +166,72 @@ def manager_dashboard():
                 if focus.strip() in focus_counts:
                     focus_counts[focus.strip()] += 1
         
+        # Sentiment analysis
+        if response.feeling:
+            sentiment_analysis[response.feeling] += 1
+        
+        # Department breakdown
+        dept = response.department or "Not specified"
+        department_breakdown[dept] = department_breakdown.get(dept, 0) + 1
+        
         # Collect concerns
         if response.concern and response.concern.strip():
             concerns.append({
                 'name': response.name,
                 'concern': response.concern,
                 'model': response.mental_model,
-                'id': response.id
+                'id': response.id,
+                'department': response.department,
+                'timestamp': response.timestamp
             })
+    
+    # Generate engagement recommendations
+    recommendations = generate_engagement_recommendations(model_counts, focus_counts, sentiment_analysis, total_responses)
     
     return render_template("manager_dashboard.html",
                          responses=responses,
                          total_responses=total_responses,
                          model_counts=model_counts,
                          focus_counts=focus_counts,
-                         concerns=concerns)
+                         concerns=concerns,
+                         sentiment_analysis=sentiment_analysis,
+                         department_breakdown=department_breakdown,
+                         recommendations=recommendations)
+
+def generate_engagement_recommendations(model_counts, focus_counts, sentiment_analysis, total_responses):
+    """Generate actionable recommendations based on stakeholder data"""
+    recommendations = []
+    
+    if total_responses == 0:
+        return ["Start gathering stakeholder feedback to generate insights"]
+    
+    # Sentiment-based recommendations
+    cautious_percentage = (sentiment_analysis.get("cautious", 0) / total_responses) * 100
+    if cautious_percentage > 60:
+        recommendations.append("High caution levels detected - increase evidence sharing and address specific concerns")
+    elif cautious_percentage < 20:
+        recommendations.append("Strong enthusiasm detected - leverage eager stakeholders as change champions")
+    
+    # Focus area recommendations
+    total_focus = sum(focus_counts.values())
+    if total_focus > 0:
+        proof_percentage = (focus_counts["proof"] / total_focus) * 100
+        people_percentage = (focus_counts["people"] / total_focus) * 100
+        
+        if proof_percentage > 40:
+            recommendations.append("Data-driven stakeholders dominate - prepare detailed business case and metrics")
+        if people_percentage > 40:
+            recommendations.append("People-focused team - emphasize impact on relationships and team dynamics")
+        if focus_counts["process"] > focus_counts["possibilities"]:
+            recommendations.append("Process-oriented team - provide clear implementation roadmaps and timelines")
+    
+    # Mental model specific recommendations
+    if model_counts.get("The Sceptic", 0) > 0:
+        recommendations.append("Address sceptical stakeholders with evidence and risk mitigation plans")
+    if model_counts.get("The Facilitator", 0) + model_counts.get("The Humanitarian", 0) > total_responses * 0.3:
+        recommendations.append("Leverage collaborative stakeholders to build consensus and support others")
+    
+    return recommendations
 
 @app.route("/opt-out/<int:response_id>")
 def opt_out(response_id):
@@ -188,6 +241,74 @@ def opt_out(response_id):
     db.session.commit()
     return render_template("opt_out_success.html")
 
+@app.route("/manager/concern/<int:concern_id>/assign", methods=["POST"])
+def assign_concern_to_sme():
+    """Assign a concern to an SME"""
+    concern_id = request.json.get('concern_id')
+    sme_name = request.json.get('sme_name')
+    
+    response = StakeholderResponse.query.get_or_404(concern_id)
+    
+    # Create SME response record
+    sme_response = SMEResponse()
+    sme_response.stakeholder_id = response.id
+    sme_response.sme_name = sme_name
+    sme_response.concern_addressed = response.concern
+    
+    db.session.add(sme_response)
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Concern assigned to SME"})
+
+@app.route("/manager/export")
+def export_data():
+    """Export stakeholder data for analysis"""
+    responses = StakeholderResponse.query.filter_by(opted_out=False).all()
+    
+    export_data = []
+    for response in responses:
+        export_data.append({
+            'name': response.name,
+            'email': response.email,
+            'department': response.department,
+            'mental_model': response.mental_model,
+            'feeling': response.feeling,
+            'style': response.style,
+            'focus_areas': response.focus_areas,
+            'concern': response.concern,
+            'frequency_preference': response.frequency_preference,
+            'timestamp': response.timestamp.isoformat()
+        })
+    
+    return jsonify(export_data)
+
+@app.route("/manager/generate-faq")
+def generate_faq():
+    """Generate FAQ based on common concerns"""
+    responses = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None)).all()
+    
+    concerns_by_category = {}
+    for response in responses:
+        if response.concern and response.concern.strip():
+            # Simple categorization based on focus areas
+            category = "General"
+            if response.focus_areas:
+                primary_focus = response.focus_areas.split(',')[0].strip()
+                if primary_focus == "proof":
+                    category = "Evidence & Data"
+                elif primary_focus == "process":
+                    category = "Implementation & Process"
+                elif primary_focus == "people":
+                    category = "People & Relationships"
+                elif primary_focus == "possibilities":
+                    category = "Vision & Future"
+            
+            if category not in concerns_by_category:
+                concerns_by_category[category] = []
+            concerns_by_category[category].append(response.concern)
+    
+    return render_template("faq_generator.html", concerns_by_category=concerns_by_category)
+
 @app.route("/api/stats")
 def get_stats():
     """API endpoint for dashboard statistics"""
@@ -196,7 +317,8 @@ def get_stats():
     stats = {
         'total_responses': len(responses),
         'model_distribution': {},
-        'focus_distribution': {"proof": 0, "process": 0, "people": 0, "possibilities": 0}
+        'focus_distribution': {"proof": 0, "process": 0, "people": 0, "possibilities": 0},
+        'sentiment_distribution': {"eager": 0, "cautious": 0}
     }
     
     for response in responses:
@@ -209,6 +331,10 @@ def get_stats():
             for focus in response.focus_areas.split(','):
                 if focus.strip() in stats['focus_distribution']:
                     stats['focus_distribution'][focus.strip()] += 1
+        
+        # Sentiment
+        if response.feeling:
+            stats['sentiment_distribution'][response.feeling] += 1
     
     return jsonify(stats)
 

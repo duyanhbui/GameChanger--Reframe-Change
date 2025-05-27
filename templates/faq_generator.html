@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ Generator - Change Management</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6">
+                        <i data-feather="help-circle" class="me-3"></i>
+                        FAQ Generator
+                    </h1>
+                    <p class="lead">Convert stakeholder concerns into FAQ documents</p>
+                </div>
+                <a href="/manager" class="btn btn-outline-primary">
+                    <i data-feather="arrow-left" class="me-2"></i>
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        {% if concerns_by_category %}
+        <!-- FAQ Categories -->
+        {% for category, concerns in concerns_by_category.items() %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            {% if category == "Evidence & Data" %}
+                                <span class="badge bg-primary me-2">Blue</span>
+                            {% elif category == "Implementation & Process" %}
+                                <span class="badge bg-success me-2">Green</span>
+                            {% elif category == "People & Relationships" %}
+                                <span class="badge bg-danger me-2">Red</span>
+                            {% elif category == "Vision & Future" %}
+                                <span class="badge bg-warning me-2">Yellow</span>
+                            {% else %}
+                                <span class="badge bg-secondary me-2">General</span>
+                            {% endif %}
+                            {{ category }}
+                        </h4>
+                        <span class="badge bg-info">{{ concerns|length }} concerns</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <strong>FAQ Template for {{ category }}:</strong>
+                            </label>
+                            <textarea class="form-control" rows="6" readonly>{% for concern in concerns[:5] %}
+Q: {{ concern }}
+A: [SME Response Required]
+
+{% endfor %}{% if concerns|length > 5 %}... and {{ concerns|length - 5 }} more similar concerns{% endif %}</textarea>
+                        </div>
+                        
+                        <!-- Common Themes -->
+                        <div class="mb-3">
+                            <h6>Common Concern Themes:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for concern in concerns %}
+                                    {% if "cost" in concern.lower() or "budget" in concern.lower() %}
+                                        <span class="badge bg-warning">Budget/Cost</span>
+                                    {% elif "time" in concern.lower() or "timeline" in concern.lower() %}
+                                        <span class="badge bg-info">Timeline</span>
+                                    {% elif "training" in concern.lower() or "learn" in concern.lower() %}
+                                        <span class="badge bg-success">Training</span>
+                                    {% elif "job" in concern.lower() or "role" in concern.lower() %}
+                                        <span class="badge bg-danger">Job Impact</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="copyToClipboard('faq-{{ loop.index }}')">
+                                <i data-feather="copy" class="me-1"></i>
+                                Copy FAQ Template
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="markAsAddressed('{{ category }}')">
+                                <i data-feather="check" class="me-1"></i>
+                                Mark as Addressed
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Export Options -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i data-feather="download" class="me-2"></i>
+                            Export FAQ Document
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Export Options:</h6>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary" onclick="exportFAQ('word')">
+                                        <i data-feather="file-text" class="me-2"></i>
+                                        Export to Word Document
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="exportFAQ('pdf')">
+                                        <i data-feather="file" class="me-2"></i>
+                                        Export to PDF
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="exportFAQ('email')">
+                                        <i data-feather="mail" class="me-2"></i>
+                                        Email to SMEs
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Document Structure:</h6>
+                                <ul class="list-unstyled">
+                                    <li><i data-feather="check" class="text-success me-2"></i>Organized by focus areas</li>
+                                    <li><i data-feather="check" class="text-success me-2"></i>Common themes highlighted</li>
+                                    <li><i data-feather="check" class="text-success me-2"></i>Space for SME responses</li>
+                                    <li><i data-feather="check" class="text-success me-2"></i>Stakeholder attribution</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i data-feather="message-square" class="text-muted mb-3" style="width: 64px; height: 64px;"></i>
+                        <h4>No Concerns to Process</h4>
+                        <p class="text-muted mb-4">
+                            No stakeholder concerns have been submitted yet. 
+                            Once stakeholders submit questions, they'll appear here organized by focus area.
+                        </p>
+                        <a href="/manager" class="btn btn-primary">
+                            <i data-feather="arrow-left" class="me-2"></i>
+                            Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        feather.replace();
+        
+        function copyToClipboard(elementId) {
+            const textarea = document.querySelector(`textarea`);
+            textarea.select();
+            document.execCommand('copy');
+            
+            // Show success toast
+            showToast('FAQ template copied to clipboard!', 'success');
+        }
+        
+        function markAsAddressed(category) {
+            // This would integrate with your backend to mark concerns as addressed
+            showToast(`${category} concerns marked as addressed`, 'success');
+        }
+        
+        function exportFAQ(format) {
+            // This would trigger the appropriate export functionality
+            showToast(`Exporting FAQ as ${format}...`, 'info');
+        }
+        
+        function showToast(message, type = 'info') {
+            // Simple toast notification
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+            toast.style.zIndex = '9999';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
