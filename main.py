@@ -285,9 +285,9 @@ def manager_dashboard():
             # No assignment yet - needs attention
             open_concerns.append(concern)
         else:
-            # Check if any assignment is still pending or responded (not resolved)
-            has_unresolved = any(a.status in ['pending', 'responded'] for a in assignments)
-            if has_unresolved:
+            # Check if ALL assignments are resolved - if not, it needs attention
+            all_resolved = all(a.status == 'resolved' for a in assignments)
+            if not all_resolved:
                 open_concerns.append(concern)
     
     # Sort by timestamp descending and ensure uniqueness
