@@ -361,7 +361,15 @@ def export_data():
 def project_management():
     """Project management page"""
     projects = ChangeProject.query.all()
-    return render_template("project_management.html", projects=projects)
+    
+    # Calculate statistics
+    total_responses = sum(len(project.responses) for project in projects)
+    active_projects = sum(1 for project in projects if project.is_active)
+    
+    return render_template("project_management.html", 
+                         projects=projects,
+                         total_responses=total_responses,
+                         active_projects=active_projects)
 
 @app.route("/manager/projects/create", methods=["GET", "POST"])
 def create_project():
