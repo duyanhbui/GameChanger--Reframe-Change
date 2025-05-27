@@ -126,6 +126,12 @@
                                     <i data-feather="file-text" class="me-1"></i>
                                     Team Report
                                 </button>
+                                {% if selected_project %}
+                                <button class="btn btn-outline-warning" onclick="showStakeholderLink()">
+                                    <i data-feather="link" class="me-1"></i>
+                                    Get Assessment Link
+                                </button>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -611,6 +617,90 @@
                 window.location.href = '/manager';
             }
         }
+        
+        function showStakeholderLink() {
+            const modal = new bootstrap.Modal(document.getElementById('stakeholderLinkModal'));
+            modal.show();
+            // Update feather icons in modal
+            setTimeout(() => feather.replace(), 100);
+        }
+        
+        function copyAssessmentLink() {
+            const linkInput = document.getElementById('assessmentLink');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                showToast('Assessment link copied to clipboard!', 'success');
+            } catch (err) {
+                showToast('Could not copy link. Please select and copy manually.', 'warning');
+            }
+        }
+        
+        function emailAssessmentLink() {
+            const link = document.getElementById('assessmentLink').value;
+            const projectName = '{{ selected_project.name if selected_project else "Change Project" }}';
+            const subject = encodeURIComponent(`Change Management Assessment - ${projectName}`);
+            const body = encodeURIComponent(`Hi,
+
+Please take a few minutes to complete our change management assessment for ${projectName}. Your input helps us understand your perspective and tailor our support accordingly.
+
+Assessment link: ${link}
+
+This quick 4-question survey takes about 2-3 minutes to complete.
+
+Thank you for your participation!`);
+            
+            window.open(`mailto:?subject=${subject}&body=${body}`);
+        }
     </script>
+
+    <!-- Stakeholder Assessment Link Modal -->
+    {% if selected_project %}
+    <div class="modal fade" id="stakeholderLinkModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i data-feather="link" class="me-2"></i>
+                        Stakeholder Assessment Link
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Project:</strong> {{ selected_project.name }}</p>
+                    <p class="text-muted">Share this link with stakeholders to collect feedback specifically for this project:</p>
+                    
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="assessmentLink" 
+                               value="{{ request.url_root }}?project_id={{ selected_project.id }}" readonly>
+                        <button class="btn btn-outline-secondary" onclick="copyAssessmentLink()">
+                            <i data-feather="copy"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>How to use:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Send this link via email, Teams, or other communication channels</li>
+                            <li>Responses will be automatically linked to this project</li>
+                            <li>Use the project filter above to view only this project's responses</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="emailAssessmentLink()">
+                        <i data-feather="mail" class="me-1"></i>
+                        Open in Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
 </body>
 </html>
