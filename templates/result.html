@@ -1,147 +1,458 @@
-{% extends "base.html" %}
-
-{% block title %}{{ mental_model.name }} - Assessment Results{% endblock %}
-
-{% block content %}
-<div class="container py-5">
-    <!-- Header Section -->
-    <div class="row justify-content-center mb-5">
-        <div class="col-lg-8 text-center">
-            <div class="result-header">
-                <div class="mb-4">
-                    <i data-feather="award" class="result-icon text-primary"></i>
-                </div>
-                <h1 class="display-5 fw-bold mb-3">{{ mental_model.name }}</h1>
-                <p class="lead">{{ mental_model.description }}</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Main Content -->
-    <div class="row">
-        <!-- Strengths -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">
-                        <i data-feather="trending-up" class="me-2"></i>
-                        Your Strengths
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled">
-                        {% for strength in mental_model.strengths %}
-                            <li class="mb-3">
-                                <i data-feather="check-circle" class="text-success me-2"></i>
-                                {{ strength }}
-                            </li>
-                        {% endfor %}
-                    </ul>
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ model }} - Assessment Results</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <!-- Header Section -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <div class="result-header">
+                    <div class="mb-4">
+                        <i data-feather="award" class="result-icon text-primary" style="width: 64px; height: 64px;"></i>
+                    </div>
+                    <h1 class="display-5 fw-bold mb-3">{{ model }}</h1>
+                    <p class="lead">Your KB16 Change Management Style</p>
                 </div>
             </div>
         </div>
         
-        <!-- Challenges -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-warning text-dark">
-                    <h4 class="mb-0">
-                        <i data-feather="alert-triangle" class="me-2"></i>
-                        Potential Challenges
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled">
-                        {% for challenge in mental_model.challenges %}
-                            <li class="mb-3">
-                                <i data-feather="alert-circle" class="text-warning me-2"></i>
-                                {{ challenge }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Recommendations -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h4 class="mb-0">
-                        <i data-feather="lightbulb" class="me-2"></i>
-                        Recommendations for Growth
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for recommendation in mental_model.recommendations %}
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex align-items-start">
-                                    <div class="flex-shrink-0">
-                                        <span class="badge bg-info rounded-pill">{{ loop.index }}</span>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        {{ recommendation }}
-                                    </div>
+        <!-- Model Description -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0">
+                            <i data-feather="user" class="me-2"></i>
+                            Your Change Management Profile
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% if model == "The Architect" %}
+                            <p class="lead">You are a strategic planner who approaches change with careful analysis and detailed blueprints for success.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Strategic thinking and planning</li>
+                                        <li>Data-driven decision making</li>
+                                        <li>Risk assessment and mitigation</li>
+                                        <li>Building solid foundations for change</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May over-plan and delay action</li>
+                                        <li>Could miss emotional aspects of change</li>
+                                        <li>Might resist rapid pivots</li>
+                                    </ul>
                                 </div>
                             </div>
-                        {% endfor %}
+                        {% elif model == "The Driver" %}
+                            <p class="lead">You are results-focused and drive change through clear processes and accountability.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Process optimization</li>
+                                        <li>Clear execution and delivery</li>
+                                        <li>Performance management</li>
+                                        <li>Systematic implementation</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May push too hard for results</li>
+                                        <li>Could overlook team needs</li>
+                                        <li>Might be inflexible with processes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Facilitator" %}
+                            <p class="lead">You excel at bringing people together and ensuring everyone's voice is heard during change.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Relationship building</li>
+                                        <li>Consensus building</li>
+                                        <li>Communication and engagement</li>
+                                        <li>Creating inclusive environments</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May slow down decision-making</li>
+                                        <li>Could avoid difficult conversations</li>
+                                        <li>Might prioritize harmony over progress</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Creator" %}
+                            <p class="lead">You are an innovator who sees change as an opportunity to create breakthrough solutions.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Visionary thinking</li>
+                                        <li>Innovation and creativity</li>
+                                        <li>Inspiring possibilities</li>
+                                        <li>Comfortable with uncertainty</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May underestimate implementation challenges</li>
+                                        <li>Could move too fast for others</li>
+                                        <li>Might overlook practical constraints</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Guru" %}
+                            <p class="lead">You provide wisdom and guidance, helping others understand the deeper implications of change.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Deep expertise and knowledge</li>
+                                        <li>Mentoring and coaching</li>
+                                        <li>Evidence-based insights</li>
+                                        <li>Long-term perspective</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May be too theoretical</li>
+                                        <li>Could resist new approaches</li>
+                                        <li>Might overwhelm with detail</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Implementer" %}
+                            <p class="lead">You excel at turning ideas into reality through systematic execution and attention to detail.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Reliable execution</li>
+                                        <li>Process expertise</li>
+                                        <li>Quality control</li>
+                                        <li>Practical problem-solving</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May focus too much on details</li>
+                                        <li>Could be resistant to changes in plan</li>
+                                        <li>Might miss the bigger picture</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Humanitarian" %}
+                            <p class="lead">You prioritize the human impact of change and ensure everyone's wellbeing throughout the process.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Empathy and compassion</li>
+                                        <li>Supporting team wellbeing</li>
+                                        <li>Understanding emotional impact</li>
+                                        <li>Creating psychological safety</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May prioritize feelings over results</li>
+                                        <li>Could avoid necessary tough decisions</li>
+                                        <li>Might take resistance personally</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Explorer" %}
+                            <p class="lead">You embrace uncertainty and help others discover new possibilities through change.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Adaptability and flexibility</li>
+                                        <li>Curiosity and openness</li>
+                                        <li>Discovering opportunities</li>
+                                        <li>Supporting experimentation</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May lack direction or focus</li>
+                                        <li>Could struggle with structure</li>
+                                        <li>Might avoid difficult conversations</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Sceptic" %}
+                            <p class="lead">You provide critical thinking and challenge assumptions to ensure change is well-founded.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Critical analysis</li>
+                                        <li>Risk identification</li>
+                                        <li>Quality assurance</li>
+                                        <li>Preventing costly mistakes</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May be overly critical</li>
+                                        <li>Could block necessary progress</li>
+                                        <li>Might demoralize others</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Perfectionist" %}
+                            <p class="lead">You ensure excellence in execution and maintain high standards throughout change initiatives.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>High quality standards</li>
+                                        <li>Attention to detail</li>
+                                        <li>Process improvement</li>
+                                        <li>Preventing errors</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May delay progress for perfection</li>
+                                        <li>Could create stress for others</li>
+                                        <li>Might resist "good enough" solutions</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Preservationist" %}
+                            <p class="lead">You protect valuable relationships and culture while navigating necessary changes.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Protecting valuable culture</li>
+                                        <li>Maintaining relationships</li>
+                                        <li>Providing stability</li>
+                                        <li>Historical perspective</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May resist beneficial changes</li>
+                                        <li>Could be overly protective</li>
+                                        <li>Might struggle with innovation</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Fearful Optimist" %}
+                            <p class="lead">You balance hope for positive outcomes with realistic concerns about potential challenges.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Balanced perspective</li>
+                                        <li>Hope and inspiration</li>
+                                        <li>Risk awareness</li>
+                                        <li>Realistic planning</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May be paralyzed by conflicting feelings</li>
+                                        <li>Could send mixed messages</li>
+                                        <li>Might lack clear direction</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Forecaster" %}
+                            <p class="lead">You use data and analysis to predict outcomes and prepare for various scenarios.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Scenario planning</li>
+                                        <li>Data analysis</li>
+                                        <li>Risk management</li>
+                                        <li>Contingency preparation</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May overanalyze situations</li>
+                                        <li>Could delay action</li>
+                                        <li>Might focus too much on problems</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Bureaucrat" %}
+                            <p class="lead">You ensure compliance and proper procedures are followed throughout change processes.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Ensuring compliance</li>
+                                        <li>Following procedures</li>
+                                        <li>Managing documentation</li>
+                                        <li>Maintaining standards</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May be overly rigid</li>
+                                        <li>Could slow down innovation</li>
+                                        <li>Might prioritize process over outcomes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Shepherd" %}
+                            <p class="lead">You guide and protect your team through change with care and patience.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Caring leadership</li>
+                                        <li>Team protection</li>
+                                        <li>Patient guidance</li>
+                                        <li>Emotional support</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May be overprotective</li>
+                                        <li>Could avoid necessary challenges</li>
+                                        <li>Might resist pushing boundaries</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif model == "The Lost Soul" %}
+                            <p class="lead">You find yourself uncertain about direction but open to discovering new paths through change.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">Strengths:</h6>
+                                    <ul>
+                                        <li>Openness to possibilities</li>
+                                        <li>Flexibility and adaptability</li>
+                                        <li>Humility and learning mindset</li>
+                                        <li>Supporting others' exploration</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Growth Areas:</h6>
+                                    <ul>
+                                        <li>May lack clear direction</li>
+                                        <li>Could struggle with decision-making</li>
+                                        <li>Might need more structure and support</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% else %}
+                            <p class="lead">Your unique combination of responses doesn't match our standard patterns. This suggests you have a distinctive approach to change management that combines elements from multiple styles.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if question %}
+        <!-- Additional Comments -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h4 class="mb-0">
+                            <i data-feather="message-square" class="me-2"></i>
+                            Your Additional Thoughts
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">{{ question }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Actions -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card bg-dark">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <i data-feather="compass" class="me-2"></i>
+                            What's Next?
+                        </h5>
+                        <p class="card-text mb-4">
+                            Explore more about your change management style or take the assessment again.
+                        </p>
+                        <div class="btn-group" role="group">
+                            <a href="/" class="btn btn-outline-light">
+                                <i data-feather="refresh-cw" class="me-2"></i>
+                                Take Again
+                            </a>
+                            <button class="btn btn-outline-light" onclick="window.print()">
+                                <i data-feather="printer" class="me-2"></i>
+                                Print Results
+                            </button>
+                            <button class="btn btn-outline-light" onclick="shareResults()">
+                                <i data-feather="share-2" class="me-2"></i>
+                                Share
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card bg-dark">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        <i data-feather="compass" class="me-2"></i>
-                        Next Steps
-                    </h5>
-                    <p class="card-text mb-4">
-                        Want to explore more about change management or share these results?
-                    </p>
-                    <div class="btn-group" role="group">
-                        <a href="{{ url_for('assessment') }}" class="btn btn-outline-light">
-                            <i data-feather="refresh-cw" class="me-2"></i>
-                            Take Again
-                        </a>
-                        <button class="btn btn-outline-light" onclick="printResults()">
-                            <i data-feather="printer" class="me-2"></i>
-                            Print Results
-                        </button>
-                        <button class="btn btn-outline-light" onclick="shareResults()">
-                            <i data-feather="share-2" class="me-2"></i>
-                            Share
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        feather.replace();
+        
+        function shareResults() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '{{ model }} - My Change Management Style',
+                    text: 'I just discovered my change management style: {{ model }}',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback - copy to clipboard
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
+    </script>
     
-    {% if response %}
-    <!-- Timestamp -->
-    <div class="row mt-4">
-        <div class="col-12 text-center">
-            <small class="text-muted">
-                <i data-feather="clock" class="me-1"></i>
-                Assessment completed on {{ response.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
-            </small>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<!-- Print Styles -->
-<style media="print">
-    .navbar, footer, .btn-group { display: none !important; }
-    .card { border: 1px solid #000 !important; }
-    .card-header { background: #f8f9fa !important; color: #000 !important; }
-</style>
-{% endblock %}
+    <!-- Print Styles -->
+    <style media="print">
+        .navbar, footer, .btn-group { display: none !important; }
+        .card { border: 1px solid #000 !important; }
+        .card-header { background: #f8f9fa !important; color: #000 !important; }
+    </style>
+</body>
+</html>
