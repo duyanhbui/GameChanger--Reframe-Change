@@ -86,6 +86,11 @@
                                                 <a href="/?project_id={{ project.id }}" class="btn btn-outline-secondary" title="Assessment Link" target="_blank">
                                                     <i data-feather="external-link"></i>
                                                 </a>
+                                                {% if project.strategy_document_path %}
+                                                <a href="/manager/projects/{{ project.id }}/document" class="btn btn-outline-success" title="View Strategy Document" target="_blank">
+                                                    <i data-feather="file-text"></i>
+                                                </a>
+                                                {% endif %}
                                                 <button class="btn btn-outline-warning" onclick="toggleProjectStatus({{ project.id }})" title="Toggle Status">
                                                     {% if project.is_active %}
                                                         <i data-feather="pause"></i>

@@ -376,14 +376,21 @@ def create_project():
         
         # Handle key dates
         try:
-            if request.form.get("project_start_date"):
-                project.project_start_date = parser.parse(request.form.get("project_start_date")).date()
-            if request.form.get("go_live_date"):
-                project.go_live_date = parser.parse(request.form.get("go_live_date")).date()
-            if request.form.get("communication_start_date"):
-                project.communication_start_date = parser.parse(request.form.get("communication_start_date")).date()
-            if request.form.get("assessment_end_date"):
-                project.assessment_end_date = parser.parse(request.form.get("assessment_end_date")).date()
+            start_date = request.form.get("project_start_date")
+            if start_date:
+                project.project_start_date = parser.parse(start_date).date()
+            
+            go_live = request.form.get("go_live_date")
+            if go_live:
+                project.go_live_date = parser.parse(go_live).date()
+            
+            comm_start = request.form.get("communication_start_date")
+            if comm_start:
+                project.communication_start_date = parser.parse(comm_start).date()
+            
+            assess_end = request.form.get("assessment_end_date")
+            if assess_end:
+                project.assessment_end_date = parser.parse(assess_end).date()
         except ValueError:
             flash("Invalid date format. Please use valid dates.", "error")
             return render_template("create_project.html")
@@ -391,7 +398,7 @@ def create_project():
         # Handle file upload
         if 'strategy_document' in request.files:
             file = request.files['strategy_document']
-            if file and file.filename != '' and allowed_file(file.filename):
+            if file and file.filename and file.filename != '' and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
                 filename = timestamp + filename
