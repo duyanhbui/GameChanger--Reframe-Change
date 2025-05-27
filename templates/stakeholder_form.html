@@ -21,7 +21,7 @@
                         <p class="lead">{{ project.description }}</p>
                         {% if project.key_messages %}
                             <div class="alert alert-info">
-                                <strong>Key Message:</strong> {{ project.key_messages }}
+                                <strong>Key Points:</strong> {{ project.key_messages[:150] }}{% if project.key_messages|length > 150 %}...{% endif %}
                             </div>
                         {% endif %}
                     {% else %}
