@@ -288,8 +288,19 @@ def manager_dashboard():
             # Has pending assignments without responses - needs attention
             concerns_needing_attention.append(concern)
     
-    # Sort by timestamp descending 
-    concerns = sorted(concerns_needing_attention, key=lambda x: x.timestamp, reverse=True)
+    # Sort by timestamp descending and format for display
+    concerns = []
+    for concern in sorted(concerns_needing_attention, key=lambda x: x.timestamp, reverse=True):
+        concerns.append({
+            'name': concern.name,
+            'concern': concern.concern,
+            'model': concern.mental_model,
+            'id': concern.id,
+            'department': concern.department,
+            'timestamp': concern.timestamp,
+            'project_name': concern.project.name
+        })
+    
     sentiment_analysis = {"eager": 0, "cautious": 0}
     department_breakdown = {}
     
@@ -311,18 +322,6 @@ def manager_dashboard():
         # Department breakdown
         dept = response.department or "Not specified"
         department_breakdown[dept] = department_breakdown.get(dept, 0) + 1
-        
-        # Collect concerns
-        if response.concern and response.concern.strip():
-            concerns.append({
-                'name': response.name,
-                'concern': response.concern,
-                'model': response.mental_model,
-                'id': response.id,
-                'department': response.department,
-                'timestamp': response.timestamp,
-                'project_name': response.project.name
-            })
     
     # Generate strategic recommendations based on mental models, concerns, and project context
     recommendations = generate_strategic_recommendations(
