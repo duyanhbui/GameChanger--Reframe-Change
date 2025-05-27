@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 import PyPDF2
 from dateutil import parser
+import uuid
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "change-management-key")
@@ -74,13 +75,38 @@ class StakeholderResponse(db.Model):
     def __repr__(self):
         return f'<StakeholderResponse {self.name}: {self.mental_model}>'
 
-class SMEResponse(db.Model):
+class ConcernAssignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    stakeholder_id = db.Column(db.Integer, db.ForeignKey('stakeholder_response.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Links
+    stakeholder_response_id = db.Column(db.Integer, db.ForeignKey('stakeholder_response.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('change_project.id'), nullable=False)
+    
+    # Assignment details
+    concern_text = db.Column(db.Text, nullable=False)
+    assigned_by = db.Column(db.String(100))  # Change manager name
+    
+    # SME details
     sme_name = db.Column(db.String(100))
-    concern_addressed = db.Column(db.Text)
+    sme_email = db.Column(db.String(120))
+    
+    # Status tracking
+    status = db.Column(db.String(20), default='pending')  # pending, responded, resolved
+    assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
+    responded_at = db.Column(db.DateTime)
+    
+    # Response
     response_text = db.Column(db.Text)
+    response_method = db.Column(db.String(20))  # 'sme' or 'manager'
+    
+    # Email tracking
+    email_sent = db.Column(db.Boolean, default=False)
+    email_sent_at = db.Column(db.DateTime)
+    
+    # Relationships
+    stakeholder_response = db.relationship('StakeholderResponse', backref='concern_assignments')
+    project = db.relationship('ChangeProject', backref='concern_assignments')
     
 class ChangeProject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -324,13 +350,16 @@ def assign_concern_to_sme(concern_id):
     
     response = StakeholderResponse.query.get_or_404(concern_id)
     
-    # Create SME response record
-    sme_response = SMEResponse()
-    sme_response.stakeholder_id = response.id
-    sme_response.sme_name = sme_name
-    sme_response.concern_addressed = response.concern
+    # Create concern assignment record
+    assignment = ConcernAssignment()
+    assignment.stakeholder_response_id = response.id
+    assignment.project_id = response.project_id
+    assignment.concern_text = response.concern
+    assignment.assigned_by = "Change Manager"
+    assignment.sme_name = sme_name
+    assignment.status = "pending"
     
-    db.session.add(sme_response)
+    db.session.add(assignment)
     db.session.commit()
     
     return jsonify({"status": "success", "message": "Concern assigned to SME"})
@@ -518,7 +547,6 @@ def get_stats():
 
 # Initialize database
 with app.app_context():
-    db.drop_all()  # Reset database to include new schema
     db.create_all()
 
 if __name__ == "__main__":
