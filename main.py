@@ -255,6 +255,9 @@ def manager_dashboard():
     concerns = [response for response in responses if response.concern and response.concern.strip()]
     # Sort by timestamp descending to show most recent first
     concerns = sorted(concerns, key=lambda x: x.timestamp, reverse=True)
+    
+    # Debug: Print actual count
+    print(f"DEBUG: Found {len(concerns)} concerns for dashboard")
     sentiment_analysis = {"eager": 0, "cautious": 0}
     department_breakdown = {}
     
