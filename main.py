@@ -251,8 +251,10 @@ def manager_dashboard():
     total_responses = len(responses)
     model_counts = {}
     focus_counts = {"proof": 0, "process": 0, "people": 0, "possibilities": 0}
-    # Get concerns with their assignment statuses
-    concerns = [response for response in responses if response.concern]
+    # Get concerns with their assignment statuses (limit to recent ones for dashboard)
+    concerns = [response for response in responses if response.concern and response.concern.strip()]
+    # Sort by timestamp descending to show most recent first
+    concerns = sorted(concerns, key=lambda x: x.timestamp, reverse=True)
     sentiment_analysis = {"eager": 0, "cautious": 0}
     department_breakdown = {}
     
