@@ -277,21 +277,19 @@ def manager_dashboard():
     # Get concerns and check their assignment status
     all_concerns = [response for response in responses if response.concern and response.concern.strip()]
     
-    # Filter to only show concerns that need attention (unresolved)
-    open_concerns = []
+    # Only show concerns that have NO assignments yet OR have pending assignments
+    concerns_needing_attention = []
     for concern in all_concerns:
         assignments = ConcernAssignment.query.filter_by(stakeholder_response_id=concern.id).all()
         if not assignments:
-            # No assignment yet - needs attention
-            open_concerns.append(concern)
-        else:
-            # Check if ALL assignments are resolved - if not, it needs attention
-            all_resolved = all(a.status == 'resolved' for a in assignments)
-            if not all_resolved:
-                open_concerns.append(concern)
+            # No assignment exists - definitely needs attention
+            concerns_needing_attention.append(concern)
+        elif any(assignment.status == 'pending' and not assignment.response_text for assignment in assignments):
+            # Has pending assignments without responses - needs attention
+            concerns_needing_attention.append(concern)
     
-    # Sort by timestamp descending and ensure uniqueness
-    concerns = sorted(open_concerns, key=lambda x: x.timestamp, reverse=True)
+    # Sort by timestamp descending 
+    concerns = sorted(concerns_needing_attention, key=lambda x: x.timestamp, reverse=True)
     sentiment_analysis = {"eager": 0, "cautious": 0}
     department_breakdown = {}
     
