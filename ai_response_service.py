@@ -81,9 +81,9 @@ STAKEHOLDER CONCERN:
 
 STAKEHOLDER MENTAL MODEL: {mental_model_data['name']}
 Description: {mental_model_data['description']}
-Communication Style: {mental_model_data['communication_style']}
-Key Motivators: {', '.join(mental_model_data['motivators'])}
-Preferred Approach: {mental_model_data['preferred_approach']}
+Strengths: {', '.join(mental_model_data['strengths'])}
+Challenges: {', '.join(mental_model_data['challenges'])}
+Recommendations: {', '.join(mental_model_data['recommendations'])}
 
 PROJECT CONTEXT:
 Project Name: {project_data.get('name', 'N/A')}
