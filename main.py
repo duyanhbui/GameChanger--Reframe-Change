@@ -249,7 +249,8 @@ def submit_assessment():
         return render_template("stakeholder_result.html", 
                              model=mental_model, 
                              name=name,
-                             response_id=response.id)
+                             response_id=response.id,
+                             project_id=project_id)
     except Exception as e:
         db.session.rollback()
         flash("Error saving your response. Please try again.", "error")
