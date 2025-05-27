@@ -324,8 +324,11 @@ def manager_dashboard():
                 'project_name': response.project.name
             })
     
-    # Generate engagement recommendations
-    recommendations = generate_engagement_recommendations(model_counts, focus_counts, sentiment_analysis, total_responses)
+    # Generate strategic recommendations based on mental models, concerns, and project context
+    recommendations = generate_strategic_recommendations(
+        model_counts, focus_counts, sentiment_analysis, total_responses, 
+        all_concerns, selected_project
+    )
     
     return render_template("manager_dashboard.html",
                          responses=responses,
@@ -339,40 +342,150 @@ def manager_dashboard():
                          projects=projects,
                          selected_project=selected_project)
 
-def generate_engagement_recommendations(model_counts, focus_counts, sentiment_analysis, total_responses):
-    """Generate actionable recommendations based on stakeholder data"""
+def generate_strategic_recommendations(model_counts, focus_counts, sentiment_analysis, total_responses, concerns, project):
+    """Generate intelligent strategic recommendations based on mental models, concerns, and project context"""
+    import os
     recommendations = []
     
     if total_responses == 0:
-        return ["Start gathering stakeholder feedback to generate insights"]
+        return ["Start gathering stakeholder feedback to generate strategic insights"]
     
-    # Sentiment-based recommendations
+    # Analyze concern patterns
+    concern_themes = analyze_concern_themes(concerns)
+    
+    # Generate strategic insights
+    recommendations.extend(generate_sentiment_insights(sentiment_analysis, total_responses))
+    recommendations.extend(generate_mental_model_insights(model_counts, total_responses))
+    recommendations.extend(generate_concern_insights(concern_themes))
+    recommendations.extend(generate_focus_insights(focus_counts, total_responses))
+    
+    # Add project-specific insights if available
+    if project and project.change_strategy:
+        recommendations.append("📋 Align communications with your documented change strategy for consistency")
+    
+    return recommendations if recommendations else ["Continue monitoring stakeholder feedback for strategic insights"]
+
+
+def analyze_concern_themes(concerns):
+    """Analyze common themes in stakeholder concerns"""
+    if not concerns:
+        return {}
+    
+    themes = {
+        'communication': 0,
+        'timeline': 0,
+        'resources': 0,
+        'training': 0,
+        'process': 0,
+        'technology': 0,
+        'role_impact': 0
+    }
+    
+    for concern in concerns:
+        concern_text = concern.concern.lower()
+        if any(word in concern_text for word in ['when', 'timeline', 'date', 'schedule']):
+            themes['timeline'] += 1
+        if any(word in concern_text for word in ['how', 'training', 'learn', 'support']):
+            themes['training'] += 1
+        if any(word in concern_text for word in ['what', 'why', 'information', 'communication']):
+            themes['communication'] += 1
+        if any(word in concern_text for word in ['cost', 'budget', 'resource', 'money']):
+            themes['resources'] += 1
+        if any(word in concern_text for word in ['process', 'procedure', 'workflow']):
+            themes['process'] += 1
+        if any(word in concern_text for word in ['system', 'technology', 'software', 'tool']):
+            themes['technology'] += 1
+        if any(word in concern_text for word in ['job', 'role', 'responsibility', 'impact']):
+            themes['role_impact'] += 1
+    
+    return {k: v for k, v in themes.items() if v > 0}
+
+
+def generate_sentiment_insights(sentiment_analysis, total_responses):
+    """Generate insights based on sentiment distribution"""
+    insights = []
     cautious_percentage = (sentiment_analysis.get("cautious", 0) / total_responses) * 100
-    if cautious_percentage > 60:
-        recommendations.append("High caution levels detected - increase evidence sharing and address specific concerns")
+    
+    if cautious_percentage > 70:
+        insights.append("⚠️ High resistance detected (>70% cautious) - Implement intensive change support and address specific concerns immediately")
+    elif cautious_percentage > 50:
+        insights.append("🔍 Moderate resistance (>50% cautious) - Increase communication frequency and provide more detailed information")
     elif cautious_percentage < 20:
-        recommendations.append("Strong enthusiasm detected - leverage eager stakeholders as change champions")
+        insights.append("🚀 Strong change readiness (<20% cautious) - Accelerate implementation and leverage enthusiastic stakeholders as champions")
+    else:
+        insights.append("⚖️ Balanced sentiment - Maintain current communication approach while monitoring for shifts")
     
-    # Focus area recommendations
-    total_focus = sum(focus_counts.values())
-    if total_focus > 0:
-        proof_percentage = (focus_counts["proof"] / total_focus) * 100
-        people_percentage = (focus_counts["people"] / total_focus) * 100
-        
-        if proof_percentage > 40:
-            recommendations.append("Data-driven stakeholders dominate - prepare detailed business case and metrics")
-        if people_percentage > 40:
-            recommendations.append("People-focused team - emphasize impact on relationships and team dynamics")
-        if focus_counts["process"] > focus_counts["possibilities"]:
-            recommendations.append("Process-oriented team - provide clear implementation roadmaps and timelines")
+    return insights
+
+
+def generate_mental_model_insights(model_counts, total_responses):
+    """Generate insights based on mental model distribution"""
+    insights = []
     
-    # Mental model specific recommendations
-    if model_counts.get("The Sceptic", 0) > 0:
-        recommendations.append("Address sceptical stakeholders with evidence and risk mitigation plans")
-    if model_counts.get("The Facilitator", 0) + model_counts.get("The Humanitarian", 0) > total_responses * 0.3:
-        recommendations.append("Leverage collaborative stakeholders to build consensus and support others")
+    if not model_counts:
+        return insights
     
-    return recommendations
+    # Find dominant mental models (>30% of responses)
+    dominant_models = {k: v for k, v in model_counts.items() if (v / total_responses) > 0.3}
+    
+    if len(dominant_models) == 1:
+        model_name = list(dominant_models.keys())[0]
+        percentage = (list(dominant_models.values())[0] / total_responses) * 100
+        insights.append(f"🎯 Dominant {model_name} mindset ({percentage:.0f}%) - Tailor all communications to this mental model's preferences")
+    elif len(dominant_models) > 1:
+        insights.append("🎭 Multiple dominant mental models - Create segmented communication strategies for different stakeholder groups")
+    else:
+        insights.append("🌈 Diverse mental model distribution - Use varied communication approaches and multiple channels")
+    
+    return insights
+
+
+def generate_concern_insights(concern_themes):
+    """Generate insights based on concern themes"""
+    insights = []
+    
+    if not concern_themes:
+        return insights
+    
+    top_theme = max(concern_themes, key=concern_themes.get)
+    theme_count = concern_themes[top_theme]
+    
+    theme_actions = {
+        'communication': "📢 Focus on clearer, more frequent communication and information sharing",
+        'timeline': "⏰ Provide detailed project timelines and milestone updates",
+        'training': "🎓 Develop comprehensive training programs and support resources",
+        'resources': "💰 Address resource allocation concerns and budget transparency",
+        'process': "⚙️ Document and communicate new processes clearly",
+        'technology': "💻 Provide technology training and technical support",
+        'role_impact': "👥 Clarify role changes and career impact communications"
+    }
+    
+    if theme_count > 1:
+        insights.append(f"{theme_actions.get(top_theme, f'Address {top_theme} concerns')} - This is the top concern area")
+    
+    return insights
+
+
+def generate_focus_insights(focus_counts, total_responses):
+    """Generate insights based on stakeholder focus areas"""
+    insights = []
+    
+    if not focus_counts or total_responses == 0:
+        return insights
+    
+    top_focus = max(focus_counts, key=focus_counts.get)
+    focus_percentage = (focus_counts[top_focus] / total_responses) * 100
+    
+    if focus_percentage > 40:
+        focus_strategies = {
+            "people": "👥 People-first approach needed - Emphasize team impact, relationships, and collaborative benefits",
+            "process": "⚙️ Process-focused strategy - Provide detailed procedures, documentation, and structured implementation",
+            "proof": "📊 Evidence-based approach - Share data, metrics, case studies, and concrete proof points",
+            "possibilities": "🌟 Innovation-focused strategy - Highlight future opportunities, creative potential, and breakthrough possibilities"
+        }
+        insights.append(focus_strategies.get(top_focus, f"Focus on {top_focus}-oriented communications"))
+    
+    return insights
 
 @app.route("/opt-out/<int:response_id>")
 def opt_out(response_id):
