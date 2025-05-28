@@ -114,8 +114,14 @@ class ChangeProject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200))
     description = db.Column(db.Text)
-    change_strategy = db.Column(db.Text)
-    key_messages = db.Column(db.Text)
+    
+    # AI-Generated Strategy Components
+    meeting_transcription = db.Column(db.Text)  # Original meeting transcription
+    bcip = db.Column(db.Text)  # Business Case & Implementation Plan
+    change_logic = db.Column(db.Text)  # Rationale and reasoning
+    change_story = db.Column(db.Text)  # Compelling narrative
+    change_strategy = db.Column(db.Text)  # Overall approach
+    key_messages = db.Column(db.Text)  # Core communications
     
     # File uploads
     strategy_document_path = db.Column(db.String(500))  # Path to uploaded PDF
@@ -841,6 +847,12 @@ def create_project():
         project = ChangeProject()
         project.name = request.form.get("name")
         project.description = request.form.get("description")
+        
+        # AI-Generated Strategy Components
+        project.meeting_transcription = request.form.get("meeting_transcription")
+        project.bcip = request.form.get("bcip")
+        project.change_logic = request.form.get("change_logic")
+        project.change_story = request.form.get("change_story")
         project.change_strategy = request.form.get("change_strategy")
         project.key_messages = request.form.get("key_messages")
         project.is_active = True
@@ -1071,6 +1083,41 @@ def send_personalized_email():
     
     flash(f"Successfully prepared {sent_count} personalized emails for sending", "success")
     return redirect(url_for('communications_center'))
+
+@app.route("/api/generate-strategy", methods=["POST"])
+def generate_strategy():
+    """API endpoint for AI-powered strategy generation from meeting transcriptions"""
+    try:
+        data = request.get_json()
+        transcription = data.get('transcription', '')
+        project_name = data.get('project_name', '')
+        project_description = data.get('project_description', '')
+        
+        if not transcription:
+            return jsonify({'error': 'Meeting transcription is required'}), 400
+        
+        # Import here to avoid circular import issues
+        from strategy_generator import generate_change_strategy_from_transcription, validate_transcription
+        
+        # Validate transcription
+        is_valid, validation_message = validate_transcription(transcription)
+        if not is_valid:
+            return jsonify({'error': validation_message}), 400
+        
+        # Generate strategy using ChatGPT
+        result = generate_change_strategy_from_transcription(
+            transcription, 
+            project_name, 
+            project_description
+        )
+        
+        if result['success']:
+            return jsonify(result['components'])
+        else:
+            return jsonify({'error': result['error']}), 500
+            
+    except Exception as e:
+        return jsonify({'error': f'Strategy generation failed: {str(e)}'}), 500
 
 # Initialize database
 with app.app_context():
