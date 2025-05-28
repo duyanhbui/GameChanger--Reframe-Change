@@ -711,16 +711,27 @@
         const modelColors = modelLabels.map(model => mentalModelColors[model] || '#6c757d');
         const backgroundColors = modelColors.map(color => color + '80'); // Add transparency
         
+        // Calculate percentages for display
+        const totalResponses = {{ total_responses }};
+        const percentageData = [{% for model, count in model_counts.items() %}{{ (count / total_responses * 100)|round(1) }}{% if not loop.last %},{% endif %}{% endfor %}];
+        
         new Chart(mentalModelCtx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: modelLabels,
                 datasets: [{
-                    label: 'Stakeholders',
-                    data: [{% for model, count in model_counts.items() %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    label: 'Percentage of Stakeholders',
+                    data: percentageData,
                     backgroundColor: backgroundColors,
                     borderColor: modelColors,
-                    borderWidth: 2
+                    borderWidth: 3,
+                    pointBackgroundColor: modelColors,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10,
+                    fill: false,
+                    tension: 0.1
                 }]
             },
             options: {
@@ -728,13 +739,33 @@
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + '% of stakeholders';
+                            }
+                        }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
+                        max: Math.max(...percentageData) + 5,
                         ticks: {
-                            stepSize: 1
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Percentage (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Mental Models'
                         }
                     }
                 }
