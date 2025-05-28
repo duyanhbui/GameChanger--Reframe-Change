@@ -115,13 +115,26 @@ class ChangeProject(db.Model):
     name = db.Column(db.String(200))
     description = db.Column(db.Text)
     
-    # AI-Generated Strategy Components
-    meeting_transcription = db.Column(db.Text)  # Original meeting transcription
+    # Strategy Components (text and file uploads)
     bcip = db.Column(db.Text)  # Business Case & Implementation Plan
+    bcip_document_path = db.Column(db.String(500))  # Uploaded BCIP document
+    bcip_document_name = db.Column(db.String(200))  # Original BCIP filename
+    
     change_logic = db.Column(db.Text)  # Rationale and reasoning
+    change_logic_document_path = db.Column(db.String(500))  # Uploaded Change Logic document
+    change_logic_document_name = db.Column(db.String(200))  # Original Change Logic filename
+    
     change_story = db.Column(db.Text)  # Compelling narrative
+    change_story_document_path = db.Column(db.String(500))  # Uploaded Change Story document
+    change_story_document_name = db.Column(db.String(200))  # Original Change Story filename
+    
     change_strategy = db.Column(db.Text)  # Overall approach
+    change_strategy_document_path = db.Column(db.String(500))  # Uploaded Change Strategy document
+    change_strategy_document_name = db.Column(db.String(200))  # Original Change Strategy filename
+    
     key_messages = db.Column(db.Text)  # Core communications
+    key_messages_document_path = db.Column(db.String(500))  # Uploaded Key Messages document
+    key_messages_document_name = db.Column(db.String(200))  # Original Key Messages filename
     
     # File uploads
     strategy_document_path = db.Column(db.String(500))  # Path to uploaded PDF
@@ -848,14 +861,40 @@ def create_project():
         project.name = request.form.get("name")
         project.description = request.form.get("description")
         
-        # AI-Generated Strategy Components
-        project.meeting_transcription = request.form.get("meeting_transcription")
+        # Strategy Components (from uploads or text input)
         project.bcip = request.form.get("bcip")
         project.change_logic = request.form.get("change_logic")
         project.change_story = request.form.get("change_story")
         project.change_strategy = request.form.get("change_strategy")
         project.key_messages = request.form.get("key_messages")
         project.is_active = True
+        
+        # Handle strategy component file uploads
+        component_files = {
+            'bcip_document': ('bcip_document_path', 'bcip_document_name'),
+            'change_logic_document': ('change_logic_document_path', 'change_logic_document_name'),
+            'change_story_document': ('change_story_document_path', 'change_story_document_name'),
+            'change_strategy_document': ('change_strategy_document_path', 'change_strategy_document_name'),
+            'key_messages_document': ('key_messages_document_path', 'key_messages_document_name')
+        }
+        
+        for file_key, (path_attr, name_attr) in component_files.items():
+            if file_key in request.files:
+                file = request.files[file_key]
+                if file and file.filename and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    # Create unique filename
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    unique_filename = f"{timestamp}_{filename}"
+                    file_path = os.path.join(app.config.get('UPLOAD_FOLDER', 'uploads'), unique_filename)
+                    
+                    # Ensure upload directory exists
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    file.save(file_path)
+                    
+                    # Store file information in project
+                    setattr(project, path_attr, file_path)
+                    setattr(project, name_attr, filename)
         
         # Handle key dates
         try:

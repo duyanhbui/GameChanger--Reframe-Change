@@ -63,103 +63,113 @@
                                 </div>
                             </div>
                             
-                            <!-- AI Strategy Generator -->
-                            <div class="card border-success mb-4">
-                                <div class="card-header bg-success text-white">
-                                    <h5 class="mb-0">
-                                        <i data-feather="cpu" class="me-2"></i>
-                                        AI Strategy Generator
-                                    </h5>
+                            <!-- Strategy Components Upload Section -->
+                            <h5 class="mb-3 mt-4">
+                                <i data-feather="upload" class="me-2"></i>
+                                Strategy Components
+                            </h5>
+                            <p class="text-muted mb-4">Upload your strategy documents for each component. You can upload PDF files, Word documents, or paste text directly.</p>
+                            
+                            <!-- Tiled Layout for Strategy Components -->
+                            <div class="row g-4 mb-4">
+                                <!-- BCIP Tile -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <h6 class="mb-0">
+                                                <i data-feather="file-text" class="me-2"></i>
+                                                BCIP (Situational Awareness)
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <label class="form-label">Upload Document</label>
+                                            <input type="file" name="bcip_document" class="form-control mb-3" accept=".pdf,.doc,.docx,.txt">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="bcip" rows="4" 
+                                                     placeholder="Business case, situational context, and current state analysis..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Change Logic Tile -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">
+                                                <i data-feather="trending-up" class="me-2"></i>
+                                                Change Logic
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <label class="form-label">Upload Document</label>
+                                            <input type="file" name="change_logic_document" class="form-control mb-3" accept=".pdf,.doc,.docx,.txt">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="change_logic" rows="4" 
+                                                     placeholder="Logical framework and reasoning for the change initiative..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Change Story Tile -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0">
+                                                <i data-feather="book-open" class="me-2"></i>
+                                                Change Story
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <label class="form-label">Upload Document</label>
+                                            <input type="file" name="change_story_document" class="form-control mb-3" accept=".pdf,.doc,.docx,.txt">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="change_story" rows="4" 
+                                                     placeholder="Compelling narrative that explains the why, what, and how of the change..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Change Strategy Tile -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-warning">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0">
+                                                <i data-feather="target" class="me-2"></i>
+                                                Change Strategy
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <label class="form-label">Upload Document</label>
+                                            <input type="file" name="change_strategy_document" class="form-control mb-3" accept=".pdf,.doc,.docx,.txt">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="change_strategy" rows="4" 
+                                                     placeholder="Comprehensive strategy for managing and implementing the change..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Key Messages - Full Width -->
+                            <div class="card border-secondary mb-4">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i data-feather="message-square" class="me-2"></i>
+                                        Key Messages
+                                    </h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="alert alert-info">
-                                        <i data-feather="info" class="me-2"></i>
-                                        <strong>Smart Strategy Creation:</strong> Upload a meeting transcription and let AI generate your complete change management strategy including BCIP, Change Logic, Change Story, Key Messages, and Change Strategy.
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="meeting_transcription" class="form-label">Meeting Transcription</label>
-                                        <textarea class="form-control" id="meeting_transcription" name="meeting_transcription" rows="6" 
-                                                 placeholder="Paste your meeting transcription here. The AI will analyze this to generate your change management strategy components..."></textarea>
-                                        <small class="text-muted">Paste the full transcript from your change planning meeting</small>
-                                    </div>
-                                    
-                                    <div class="text-center mb-3">
-                                        <button type="button" class="btn btn-success" id="generateStrategyBtn" onclick="generateAIStrategy()">
-                                            <i data-feather="zap" class="me-2"></i>
-                                            Generate AI Strategy
-                                        </button>
-                                        <div class="spinner-border spinner-border-sm ms-2 d-none" id="strategySpinner" role="status">
-                                            <span class="visually-hidden">Generating...</span>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Upload Document</label>
+                                            <input type="file" name="key_messages_document" class="form-control" accept=".pdf,.doc,.docx,.txt">
                                         </div>
-                                    </div>
-                                    
-                                    <div id="aiResults" class="d-none">
-                                        <div class="alert alert-success">
-                                            <i data-feather="check-circle" class="me-2"></i>
-                                            AI strategy generated successfully! Review and edit the outputs below.
+                                        <div class="col-md-6">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="key_messages" rows="4" 
+                                                     placeholder="Essential messages to communicate consistently across all touchpoints..."></textarea>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Strategy Document Upload (Alternative) -->
-                            <div class="mb-4">
-                                <label class="form-label">
-                                    <strong>Or Upload Change Strategy Document (PDF)</strong>
-                                </label>
-                                <input type="file" name="strategy_document" class="form-control" accept=".pdf">
-                                <div class="form-text">Alternative: Upload a PDF document containing your change strategy and key messages.</div>
-                            </div>
-
-                            <!-- BCIP -->
-                            <div class="mb-4">
-                                <label class="form-label">
-                                    <strong>BCIP (Business Case & Implementation Plan)</strong>
-                                    <small class="text-muted">- Situational context of the project</small>
-                                </label>
-                                <textarea class="form-control" id="bcip" name="bcip" rows="4" 
-                                         placeholder="Business case, situational context, and implementation considerations..."></textarea>
-                            </div>
-                            
-                            <!-- Change Logic -->
-                            <div class="mb-4">
-                                <label class="form-label">
-                                    <strong>Change Logic</strong>
-                                    <small class="text-muted">- Rationale and reasoning behind the change</small>
-                                </label>
-                                <textarea class="form-control" id="change_logic" name="change_logic" rows="4" 
-                                         placeholder="Logical framework and reasoning for the change initiative..."></textarea>
-                            </div>
-                            
-                            <!-- Change Story -->
-                            <div class="mb-4">
-                                <label class="form-label">
-                                    <strong>Change Story</strong>
-                                    <small class="text-muted">- Compelling narrative for stakeholders</small>
-                                </label>
-                                <textarea class="form-control" id="change_story" name="change_story" rows="4" 
-                                         placeholder="Engaging story that explains the why, what, and how of the change..."></textarea>
-                            </div>
-
-                            <!-- Change Strategy -->
-                            <div class="mb-4">
-                                <label class="form-label">
-                                    <strong>Change Strategy</strong>
-                                    <small class="text-muted">- Overall approach and methodology</small>
-                                </label>
-                                <textarea class="form-control" id="change_strategy" name="change_strategy" rows="4"
-                                          placeholder="Comprehensive strategy for managing and implementing the change..."></textarea>
-                            </div>
-                            
-                            <!-- Key Messages -->
-                            <div class="mb-4">
-                                <label class="form-label">
-                                    <strong>Key Messages</strong>
-                                    <small class="text-muted">- Core communications for stakeholders</small>
-                                </label>
-                                <textarea class="form-control" id="key_messages" name="key_messages" rows="4"
-                                          placeholder="Essential messages to communicate consistently across all touchpoints..."></textarea>
                             </div>
 
                             <!-- Key Dates Section -->
@@ -267,68 +277,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         feather.replace();
-        
-        async function generateAIStrategy() {
-            const transcription = document.getElementById('meeting_transcription').value;
-            const projectName = document.querySelector('input[name="name"]').value;
-            const projectDescription = document.querySelector('textarea[name="description"]').value;
-            
-            if (!transcription.trim()) {
-                alert('Please enter a meeting transcription first.');
-                return;
-            }
-            
-            // Show loading state
-            const btn = document.getElementById('generateStrategyBtn');
-            const spinner = document.getElementById('strategySpinner');
-            const originalText = btn.innerHTML;
-            
-            btn.disabled = true;
-            spinner.classList.remove('d-none');
-            btn.innerHTML = '<i data-feather="zap" class="me-2"></i>Generating...';
-            
-            try {
-                const response = await fetch('/api/generate-strategy', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        transcription: transcription,
-                        project_name: projectName,
-                        project_description: projectDescription
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Populate the form fields with AI-generated content
-                    document.getElementById('bcip').value = data.bcip || '';
-                    document.getElementById('change_logic').value = data.change_logic || '';
-                    document.getElementById('change_story').value = data.change_story || '';
-                    document.getElementById('change_strategy').value = data.change_strategy || '';
-                    document.getElementById('key_messages').value = data.key_messages || '';
-                    
-                    // Show success message
-                    document.getElementById('aiResults').classList.remove('d-none');
-                    
-                    // Scroll to the generated content
-                    document.getElementById('bcip').scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    alert('Error generating strategy: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error generating strategy. Please try again.');
-            } finally {
-                // Reset button state
-                btn.disabled = false;
-                spinner.classList.add('d-none');
-                btn.innerHTML = originalText;
-                feather.replace();
-            }
-        }
     </script>
 </body>
 </html>
