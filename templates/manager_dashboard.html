@@ -360,7 +360,7 @@
                     </div>
                     <div class="card-body">
                         <!-- Model breakdown with color coding -->
-                        <div class="mt-4">
+                        <div>
                             {% for model, count in model_counts.items() %}
                                 {% set percentage = (count / total_responses * 100)|round(1) %}
                                 {% set model_colors = {
