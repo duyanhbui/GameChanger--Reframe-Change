@@ -359,8 +359,6 @@
                         <small class="text-muted">How your stakeholders approach change</small>
                     </div>
                     <div class="card-body">
-                        <canvas id="mentalModelChart" height="100"></canvas>
-                        
                         <!-- Model breakdown with color coding -->
                         <div class="mt-4">
                             {% for model, count in model_counts.items() %}
@@ -683,94 +681,8 @@
     <script>
         feather.replace();
         
-        // Mental Model Chart
+        // Mental Model Chart removed - using breakdown section only
         {% if total_responses > 0 %}
-        const mentalModelCtx = document.getElementById('mentalModelChart').getContext('2d');
-        // Refined color palette inspired by Reframe Change brand
-        const mentalModelColors = {
-            'The Architect': '#4A6B7C',      // Steel Blue - Strategic, analytical
-            'The Driver': '#C4384D',         // Rich Crimson - Results-focused, urgent
-            'The Facilitator': '#2D5F4F',    // Deep Teal - Collaborative, supportive
-            'The Creator': '#D4A574',        // Warm Mustard - Innovative, creative
-            'The Guru': '#6B8CAE',          // Soft Blue - Knowledge-focused, evidence-based
-            'The Implementer': '#8FAE8B',    // Sage Green - Process-oriented, systematic
-            'The Visionary': '#B08D7A',      // Warm Brown - Future-focused, inspirational
-            'The Guardian': '#7A8B8C',       // Slate Gray - Risk-aware, protective
-            'The Connector': '#E6C16C',      // Golden Yellow - Relationship-focused
-            'The Optimizer': '#5B8A8A',      // Teal Blue - Efficiency-focused
-            'The Traditionalist': '#8B6F47', // Earth Brown - Stability-focused
-            'The Catalyst': '#D67B4A',       // Terracotta - Change agent
-            'The Harmonizer': '#A8C4A2',     // Soft Green - Balance-seeking
-            'The Innovator': '#7B6B93',      // Muted Purple - Breakthrough-focused
-            'The Stabilizer': '#8C9A9E',     // Cool Gray - Consistency-focused
-            'The Transformer': '#C49969'     // Warm Amber - Transformation-focused
-        };
-        
-        // Get colors for current models
-        const modelLabels = [{% for model, count in model_counts.items() %}'{{ model }}'{% if not loop.last %},{% endif %}{% endfor %}];
-        const modelColors = modelLabels.map(model => mentalModelColors[model] || '#6c757d');
-        const backgroundColors = modelColors.map(color => color + '80'); // Add transparency
-        
-        // Calculate percentages for display
-        const totalResponses = {{ total_responses }};
-        const percentageData = [{% for model, count in model_counts.items() %}{{ (count / total_responses * 100)|round(1) }}{% if not loop.last %},{% endif %}{% endfor %}];
-        
-        new Chart(mentalModelCtx, {
-            type: 'line',
-            data: {
-                labels: modelLabels,
-                datasets: [{
-                    label: 'Percentage of Stakeholders',
-                    data: percentageData,
-                    backgroundColor: backgroundColors,
-                    borderColor: modelColors,
-                    borderWidth: 3,
-                    pointBackgroundColor: modelColors,
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 8,
-                    pointHoverRadius: 10,
-                    fill: false,
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.parsed.y + '% of stakeholders';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: Math.max(...percentageData) + 5,
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Percentage (%)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Mental Models'
-                        }
-                    }
-                }
-            }
-        });
         
         // Focus Areas Chart
         const focusCtx = document.getElementById('focusChart').getContext('2d');
