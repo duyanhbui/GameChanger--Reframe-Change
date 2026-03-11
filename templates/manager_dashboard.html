@@ -679,67 +679,52 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        feather.replace();
-        
-        // Mental Model Chart removed - using breakdown section only
-        {% if total_responses > 0 %}
-        
-        // Focus Areas Chart
-        const focusCtx = document.getElementById('focusChart').getContext('2d');
-        new Chart(focusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Proof (Blue)', 'Process (Green)', 'People (Red)', 'Possibilities (Yellow)'],
-                datasets: [{
-                    data: [{{ focus_counts.proof }}, {{ focus_counts.process }}, {{ focus_counts.people }}, {{ focus_counts.possibilities }}],
-                    backgroundColor: [
-                        'rgba(13, 110, 253, 0.8)',
-                        'rgba(25, 135, 84, 0.8)',
-                        'rgba(220, 53, 69, 0.8)',
-                        'rgba(255, 193, 7, 0.8)'
-                    ],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+        // Defer all initialization until DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize feather icons when ready
+            if (typeof feather !== 'undefined') {
+                try {
+                    feather.replace();
+                } catch(e) {
+                    console.warn('Feather icons error:', e);
                 }
             }
         });
-        {% endif %}
         
         // Enhanced manager dashboard functionality
         function assignToSME(concernId) {
-            const smeName = document.getElementById(`sme-${concernId}`).value;
-            if (!smeName.trim()) {
-                showToast('Please enter an SME name', 'warning');
-                return;
-            }
-            
-            fetch(`/manager/concern/${concernId}/assign`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    concern_id: concernId,
-                    sme_name: smeName
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showToast(`Concern assigned to ${smeName}`, 'success');
-                    document.getElementById(`concern-${concernId}`).style.opacity = '0.6';
+            try {
+                const smeName = document.getElementById(`sme-${concernId}`).value;
+                if (!smeName.trim()) {
+                    showToast('Please enter an SME name', 'warning');
+                    return;
                 }
-            })
-            .catch(error => {
+                
+                fetch(`/manager/concern/${concernId}/assign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        concern_id: concernId,
+                        sme_name: smeName
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(`Concern assigned to ${smeName}`, 'success');
+                        document.getElementById(`concern-${concernId}`).style.opacity = '0.6';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error assigning concern:', error);
+                    showToast('Error assigning concern', 'danger');
+                });
+            } catch(e) {
+                console.error('Error in assignToSME:', e);
                 showToast('Error assigning concern', 'danger');
-            });
+            }
         }
         
         function markAsAddressed(concernId) {
