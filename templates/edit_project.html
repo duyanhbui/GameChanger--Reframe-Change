@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Project - Change Management</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="display-6">
+                            <i data-feather="edit" class="me-3"></i>
+                            Edit Project
+                        </h1>
+                        <p class="lead">Update project: {{ project.name }}</p>
+                    </div>
+                    <a href="/manager/projects" class="btn btn-outline-secondary">
+                        <i data-feather="arrow-left" class="me-2"></i>
+                        Back to Projects
+                    </a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">
+                            <i data-feather="settings" class="me-2"></i>
+                            Project Details
+                        </h3>
+                    </div>
+                    
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <strong>Project Name</strong>
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" name="name" required 
+                                       value="{{ project.name }}"
+                                       placeholder="e.g., Digital Transformation Initiative">
+                                <div class="form-text">
+                                    Choose a clear, descriptive name for your change project
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <strong>Project Description</strong>
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" name="description" rows="3" required
+                                          placeholder="Brief overview of the change initiative, its scope, and objectives...">{{ project.description or '' }}</textarea>
+                                <div class="form-text">
+                                    Provide a concise description that stakeholders will understand
+                                </div>
+                            </div>
+                            
+                            <h5 class="mb-3 mt-4">
+                                <i data-feather="upload" class="me-2"></i>
+                                Strategy Components
+                            </h5>
+                            <p class="text-muted mb-4">Upload your strategy documents for each component. You can upload PDF files, Word documents, or paste text directly.</p>
+                            
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <h6 class="mb-0">
+                                                <i data-feather="file-text" class="me-2"></i>
+                                                BCIP (Situational Awareness)
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if project.bcip_document_name %}
+                                            <div class="alert alert-success d-flex justify-content-between align-items-center mb-3" id="bcip_file_info">
+                                                <span><i data-feather="paperclip" class="me-1"></i> {{ project.bcip_document_name }}</span>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile('bcip_document', this)">
+                                                    <i data-feather="x"></i>
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                            <label class="form-label">{{ 'Replace' if project.bcip_document_name else 'Upload' }} Document</label>
+                                            <input type="file" name="bcip_document" class="form-control mb-3" accept=".pdf,.doc,.docx,.txt">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="bcip" rows="4" 
+                                                     placeholder="Business case, situational context, and current state analysis...">{{ project.bcip or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">
+                                                <i data-feather="trending-up" class="me-2"></i>
+                                                Change Logic
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if project.change_logic_document_name %}
+                                            <div class="alert alert-success d-flex justify-content-between align-items-center mb-3" id="change_logic_file_info">
+                                                <span><i data-feather="paperclip" class="me-1"></i> {{ project.change_logic_document_name }}</span>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile('change_logic_document', this)">
+                                                    <i data-feather="x"></i>
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                            <label class="form-label">{{ 'Replace' if project.change_logic_document_name else 'Upload' }} Document</label>
+                                            <input type="file" name="change_logic_document" class="form-control mb-3" accept=".pdf,.doc,.docx,.txt">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="change_logic" rows="4" 
+                                                     placeholder="Logical framework and reasoning for the change initiative...">{{ project.change_logic or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0">
+                                                <i data-feather="book-open" class="me-2"></i>
+                                                Change Story
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if project.change_story_document_name %}
+                                            <div class="alert alert-success d-flex justify-content-between align-items-center mb-3" id="change_story_file_info">
+                                                <span><i data-feather="paperclip" class="me-1"></i> {{ project.change_story_document_name }}</span>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile('change_story_document', this)">
+                                                    <i data-feather="x"></i>
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                            <label class="form-label">{{ 'Replace' if project.change_story_document_name else 'Upload' }} Document</label>
+                                            <input type="file" name="change_story_document" class="form-control mb-3" accept=".pdf,.doc,.docx,.txt">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="change_story" rows="4" 
+                                                     placeholder="Compelling narrative that explains the why, what, and how of the change...">{{ project.change_story or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-warning">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0">
+                                                <i data-feather="target" class="me-2"></i>
+                                                Change Strategy
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if project.change_strategy_document_name %}
+                                            <div class="alert alert-success d-flex justify-content-between align-items-center mb-3" id="change_strategy_file_info">
+                                                <span><i data-feather="paperclip" class="me-1"></i> {{ project.change_strategy_document_name }}</span>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile('change_strategy_document', this)">
+                                                    <i data-feather="x"></i>
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                            <label class="form-label">{{ 'Replace' if project.change_strategy_document_name else 'Upload' }} Document</label>
+                                            <input type="file" name="change_strategy_document" class="form-control mb-3" accept=".pdf,.doc,.docx,.txt">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="change_strategy" rows="4" 
+                                                     placeholder="Comprehensive strategy for managing and implementing the change...">{{ project.change_strategy or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card border-secondary mb-4">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i data-feather="message-square" class="me-2"></i>
+                                        Key Messages
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if project.key_messages_document_name %}
+                                    <div class="alert alert-success d-flex justify-content-between align-items-center mb-3" id="key_messages_file_info">
+                                        <span><i data-feather="paperclip" class="me-1"></i> {{ project.key_messages_document_name }}</span>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile('key_messages_document', this)">
+                                            <i data-feather="x"></i>
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">{{ 'Replace' if project.key_messages_document_name else 'Upload' }} Document</label>
+                                            <input type="file" name="key_messages_document" class="form-control" accept=".pdf,.doc,.docx,.txt">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Or Enter Text</label>
+                                            <textarea class="form-control" name="key_messages" rows="4" 
+                                                     placeholder="Essential messages to communicate consistently across all touchpoints...">{{ project.key_messages or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 class="mb-3 mt-4">
+                                <i data-feather="calendar" class="me-2"></i>
+                                Key Project Dates
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <strong>Project Start Date</strong>
+                                    </label>
+                                    <input type="date" name="project_start_date" class="form-control"
+                                           value="{{ project.project_start_date.strftime('%Y-%m-%d') if project.project_start_date else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <strong>Go-Live Date</strong>
+                                    </label>
+                                    <input type="date" name="go_live_date" class="form-control"
+                                           value="{{ project.go_live_date.strftime('%Y-%m-%d') if project.go_live_date else '' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <strong>Communication Start Date</strong>
+                                    </label>
+                                    <input type="date" name="communication_start_date" class="form-control"
+                                           value="{{ project.communication_start_date.strftime('%Y-%m-%d') if project.communication_start_date else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <strong>Assessment End Date</strong>
+                                    </label>
+                                    <input type="date" name="assessment_end_date" class="form-control"
+                                           value="{{ project.assessment_end_date.strftime('%Y-%m-%d') if project.assessment_end_date else '' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/manager/projects" class="btn btn-outline-secondary me-md-2">
+                                    <i data-feather="x" class="me-2"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="save" class="me-2"></i>
+                                    Save Changes
+                                </button>
+                            </div>
+
+                            <div id="files_to_remove"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        feather.replace();
+
+        function removeFile(fileType, btn) {
+            if (confirm('Remove this attached file?')) {
+                var container = document.getElementById('files_to_remove');
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'remove_files';
+                input.value = fileType;
+                container.appendChild(input);
+
+                var alertEl = btn.closest('.alert');
+                alertEl.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

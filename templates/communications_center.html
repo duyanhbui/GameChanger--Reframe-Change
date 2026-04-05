@@ -19,13 +19,17 @@
                 <p class="lead">Send personalized messages based on mental models</p>
             </div>
             <div>
-                <a href="/manager" class="btn btn-outline-secondary me-2">
+                <a href="/manager{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-outline-secondary me-2">
                     <i data-feather="bar-chart-2" class="me-2"></i>
                     Dashboard
                 </a>
-                <a href="/manager/concerns" class="btn btn-outline-primary">
+                <a href="/manager/concerns{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-outline-primary me-2">
                     <i data-feather="message-circle" class="me-2"></i>
                     Concerns
+                </a>
+                <a href="/manager/projects" class="btn btn-outline-info">
+                    <i data-feather="folder" class="me-2"></i>
+                    Projects
                 </a>
             </div>
         </div>

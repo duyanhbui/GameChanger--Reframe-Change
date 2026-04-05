@@ -8,13 +8,14 @@ from dateutil import parser
 import uuid
 from email_service import send_concern_assignment_email, send_response_notification_email
 from ai_response_service import generate_ai_response_suggestion, get_existing_faqs
+from departments import DEPARTMENTS
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "change-management-key")
 
 # File upload configuration
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'pdf'}
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -230,7 +231,7 @@ def index():
             db.session.add(project)
             db.session.commit()
     
-    return render_template("stakeholder_form.html", project=project)
+    return render_template("stakeholder_form.html", project=project, departments=DEPARTMENTS)
 
 @app.route("/submit", methods=["POST"])
 def submit_assessment():
@@ -945,6 +946,135 @@ def create_project():
             flash("Error creating project. Please try again.", "error")
     
     return render_template("create_project.html")
+
+@app.route("/manager/projects/<int:project_id>/edit", methods=["GET", "POST"])
+def edit_project(project_id):
+    """Edit an existing change project"""
+    project = ChangeProject.query.get_or_404(project_id)
+
+    if request.method == "POST":
+        project.name = request.form.get("name")
+        project.description = request.form.get("description")
+
+        project.bcip = request.form.get("bcip")
+        project.change_logic = request.form.get("change_logic")
+        project.change_story = request.form.get("change_story")
+        project.change_strategy = request.form.get("change_strategy")
+        project.key_messages = request.form.get("key_messages")
+
+        component_files = {
+            'bcip_document': ('bcip_document_path', 'bcip_document_name', 'bcip'),
+            'change_logic_document': ('change_logic_document_path', 'change_logic_document_name', 'change_logic'),
+            'change_story_document': ('change_story_document_path', 'change_story_document_name', 'change_story'),
+            'change_strategy_document': ('change_strategy_document_path', 'change_strategy_document_name', 'change_strategy'),
+            'key_messages_document': ('key_messages_document_path', 'key_messages_document_name', 'key_messages')
+        }
+
+        files_to_delete = []
+
+        removed_files = request.form.getlist("remove_files")
+        for file_key, (path_attr, name_attr, text_attr) in component_files.items():
+            if file_key in removed_files:
+                old_path = getattr(project, path_attr)
+                if old_path:
+                    files_to_delete.append(old_path)
+                setattr(project, path_attr, None)
+                setattr(project, name_attr, None)
+
+        for file_key, (path_attr, name_attr, text_attr) in component_files.items():
+            if file_key in request.files:
+                file = request.files[file_key]
+                if file and file.filename and allowed_file(file.filename):
+                    old_path = getattr(project, path_attr)
+                    if old_path:
+                        files_to_delete.append(old_path)
+                    filename = secure_filename(file.filename)
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    unique_filename = f"{timestamp}_{filename}"
+                    file_path = os.path.join(app.config.get('UPLOAD_FOLDER', 'uploads'), unique_filename)
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    file.save(file_path)
+                    setattr(project, path_attr, file_path)
+                    setattr(project, name_attr, filename)
+
+        try:
+            start_date = request.form.get("project_start_date")
+            project.project_start_date = parser.parse(start_date).date() if start_date else None
+
+            go_live = request.form.get("go_live_date")
+            project.go_live_date = parser.parse(go_live).date() if go_live else None
+
+            comm_start = request.form.get("communication_start_date")
+            project.communication_start_date = parser.parse(comm_start).date() if comm_start else None
+
+            assess_end = request.form.get("assessment_end_date")
+            project.assessment_end_date = parser.parse(assess_end).date() if assess_end else None
+        except ValueError:
+            flash("Invalid date format. Please use valid dates.", "error")
+            return render_template("edit_project.html", project=project)
+
+        if 'strategy_document' in request.files:
+            file = request.files['strategy_document']
+            if file and file.filename and file.filename != '' and allowed_file(file.filename):
+                old_path = project.strategy_document_path
+                if old_path:
+                    files_to_delete.append(old_path)
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                filename = timestamp + filename
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                if file_path.endswith('.pdf'):
+                    extracted_text = extract_text_from_pdf(file_path)
+                    if not project.change_strategy:
+                        project.change_strategy = extracted_text[:1000] + "..." if len(extracted_text) > 1000 else extracted_text
+                project.strategy_document_path = file_path
+                project.strategy_document_name = file.filename
+
+        if 'remove_strategy_document' in request.form:
+            old_path = project.strategy_document_path
+            if old_path:
+                files_to_delete.append(old_path)
+            project.strategy_document_path = None
+            project.strategy_document_name = None
+
+        try:
+            db.session.commit()
+            for f in files_to_delete:
+                if os.path.exists(f):
+                    os.remove(f)
+            flash(f"Project '{project.name}' updated successfully!", "success")
+            return redirect(url_for("project_management"))
+        except Exception as e:
+            db.session.rollback()
+            flash("Error updating project. Please try again.", "error")
+
+    return render_template("edit_project.html", project=project)
+
+@app.route("/manager/projects/<int:project_id>/remove-file/<file_type>", methods=["POST"])
+def remove_project_file(project_id, file_type):
+    """Remove a specific file from a project"""
+    project = ChangeProject.query.get_or_404(project_id)
+
+    file_map = {
+        'bcip_document': ('bcip_document_path', 'bcip_document_name'),
+        'change_logic_document': ('change_logic_document_path', 'change_logic_document_name'),
+        'change_story_document': ('change_story_document_path', 'change_story_document_name'),
+        'change_strategy_document': ('change_strategy_document_path', 'change_strategy_document_name'),
+        'key_messages_document': ('key_messages_document_path', 'key_messages_document_name'),
+        'strategy_document': ('strategy_document_path', 'strategy_document_name'),
+    }
+
+    if file_type in file_map:
+        path_attr, name_attr = file_map[file_type]
+        old_path = getattr(project, path_attr)
+        if old_path and os.path.exists(old_path):
+            os.remove(old_path)
+        setattr(project, path_attr, None)
+        setattr(project, name_attr, None)
+        db.session.commit()
+
+    return jsonify({"success": True})
 
 @app.route("/manager/projects/<int:project_id>/document")
 def view_project_document(project_id):

@@ -56,7 +56,12 @@
                             </div>
                             <div class="mb-5">
                                 <label class="form-label">Department/Team</label>
-                                <input type="text" class="form-control" name="department">
+                                <select class="form-select" name="department">
+                                    <option value="" selected disabled>Select your department</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept }}">{{ dept }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             
                             <!-- Question 1: Feeling about change -->

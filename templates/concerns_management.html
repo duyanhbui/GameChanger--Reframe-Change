@@ -19,9 +19,13 @@
                 <p class="lead">Assign concerns to SMEs and track responses</p>
             </div>
             <div>
-                <a href="/manager" class="btn btn-outline-secondary me-2">
+                <a href="/manager{% if current_project %}?project_id={{ current_project.id }}{% endif %}" class="btn btn-outline-secondary me-2">
                     <i data-feather="bar-chart-2" class="me-2"></i>
                     Dashboard
+                </a>
+                <a href="/manager/communications{% if current_project %}?project_id={{ current_project.id }}{% endif %}" class="btn btn-outline-success me-2">
+                    <i data-feather="mail" class="me-2"></i>
+                    Communications
                 </a>
                 <a href="/manager/projects" class="btn btn-outline-primary">
                     <i data-feather="folder" class="me-2"></i>
