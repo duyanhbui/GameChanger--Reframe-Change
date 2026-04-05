@@ -26,16 +26,53 @@
             </div>
         </div>
 
-        {% if projects %}
-        <!-- Projects Table -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold mb-1">Search Projects</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i data-feather="search" style="width:16px;height:16px"></i></span>
+                            <input type="text" id="projectSearch" class="form-control" placeholder="Type to search by project name...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold mb-1">Status</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="all">All</option>
+                            <option value="active" selected>Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold mb-1">Company</label>
+                        <select id="companyFilter" class="form-select">
+                            <option value="all">All Companies</option>
+                            {% for company in companies %}
+                            <option value="{{ company.name }}">{{ company.name }}</option>
+                            {% endfor %}
+                            <option value="unassigned">Unassigned</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="searchBtn" class="btn btn-primary w-100" onclick="applyFilters()">
+                            <i data-feather="search" style="width:16px;height:16px" class="me-1"></i>
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i data-feather="list" class="me-2"></i>
                             All Projects
                         </h5>
+                        <span id="resultCount" class="badge bg-secondary"></span>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -50,9 +87,12 @@
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="projectTableBody">
                                     {% for project in projects %}
-                                    <tr>
+                                    <tr class="project-row"
+                                        data-name="{{ project.name|lower }}"
+                                        data-status="{{ 'active' if project.is_active else 'inactive' }}"
+                                        data-company="{{ project.company.name|lower if project.company else 'unassigned' }}">
                                         <td>
                                             <strong>{{ project.name }}</strong>
                                             {% if project.description %}
@@ -109,12 +149,15 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="noResults" class="text-center py-4 d-none">
+                            <i data-feather="search" class="text-muted mb-2" style="width:48px;height:48px"></i>
+                            <p class="text-muted mt-2">No projects match your search criteria.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Simple Stats -->
         <div class="row mt-4">
             <div class="col-md-4">
                 <div class="card text-center">
@@ -141,48 +184,66 @@
                 </div>
             </div>
         </div>
-        {% else %}
-        <!-- Empty State -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body text-center py-5">
-                        <i data-feather="folder-plus" class="text-muted mb-3" style="width: 64px; height: 64px;"></i>
-                        <h4>No Projects Yet</h4>
-                        <p class="text-muted mb-4">
-                            Create your first change management project to start collecting stakeholder feedback.
-                        </p>
-                        <a href="/manager/projects/create" class="btn btn-primary">
-                            <i data-feather="plus" class="me-2"></i>
-                            Create First Project
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         feather.replace();
+
+        function applyFilters() {
+            var searchText = document.getElementById('projectSearch').value.toLowerCase().trim();
+            var statusVal = document.getElementById('statusFilter').value;
+            var companyVal = document.getElementById('companyFilter').value.toLowerCase();
+            var rows = document.querySelectorAll('.project-row');
+            var visibleCount = 0;
+
+            rows.forEach(function(row) {
+                var name = row.getAttribute('data-name');
+                var status = row.getAttribute('data-status');
+                var company = row.getAttribute('data-company');
+                var matchName = !searchText || name.indexOf(searchText) !== -1;
+                var matchStatus = statusVal === 'all' || status === statusVal;
+                var matchCompany = companyVal === 'all' || company === companyVal;
+
+                if (matchName && matchStatus && matchCompany) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            document.getElementById('resultCount').textContent = visibleCount + ' of ' + rows.length + ' projects';
+            var noResults = document.getElementById('noResults');
+            if (visibleCount === 0 && rows.length > 0) {
+                noResults.classList.remove('d-none');
+            } else {
+                noResults.classList.add('d-none');
+            }
+        }
+
+        document.getElementById('projectSearch').addEventListener('input', applyFilters);
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('companyFilter').addEventListener('change', applyFilters);
+
+        applyFilters();
         
         function toggleProjectStatus(projectId) {
-            fetch(`/manager/projects/${projectId}/toggle`, {
+            fetch('/manager/projects/' + projectId + '/toggle', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 }
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
                 if (data.status === 'success' || data.success) {
                     location.reload();
                 } else {
                     alert('Error updating project status');
                 }
             })
-            .catch(error => {
+            .catch(function(error) {
                 console.error('Error:', error);
                 alert('Error updating project status');
             });
