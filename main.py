@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
 from werkzeug.utils import secure_filename
@@ -172,6 +172,30 @@ class FAQEntry(db.Model):
     project = db.relationship('ChangeProject', backref='faq_entries')
     concern_assignment = db.relationship('ConcernAssignment', backref='faq_entry')
 
+def get_active_project_id():
+    """Get the active project ID from URL params or session."""
+    project_id = request.args.get('project_id', type=int)
+    if project_id is not None:
+        session['active_project_id'] = project_id
+        return project_id
+    return session.get('active_project_id')
+
+def get_active_project():
+    """Get the active project object from URL params or session."""
+    project_id = get_active_project_id()
+    if project_id:
+        project = ChangeProject.query.get(project_id)
+        if project:
+            return project
+        session.pop('active_project_id', None)
+    return None
+
+@app.route("/manager/clear-project")
+def clear_active_project():
+    """Clear the active project filter and return to all-projects view."""
+    session.pop('active_project_id', None)
+    return redirect(request.args.get('next', url_for('manager_dashboard')))
+
 # KB16 Model Logic
 def assign_model(feeling, style, focus_areas):
     """Assign KB16 model based on responses"""
@@ -279,17 +303,13 @@ def submit_assessment():
 @app.route("/manager")
 def manager_dashboard():
     """Change manager dashboard"""
-    # Get all projects for dropdown
     projects = ChangeProject.query.filter_by(is_active=True).all()
-    selected_project_id = request.args.get('project_id', type=int)
+    selected_project = get_active_project()
     
-    # Filter responses by project if specified
-    if selected_project_id:
-        responses = StakeholderResponse.query.filter_by(opted_out=False, project_id=selected_project_id).all()
-        selected_project = ChangeProject.query.get(selected_project_id)
+    if selected_project:
+        responses = StakeholderResponse.query.filter_by(opted_out=False, project_id=selected_project.id).all()
     else:
         responses = StakeholderResponse.query.filter_by(opted_out=False).all()
-        selected_project = None
     
     # Calculate statistics
     total_responses = len(responses)
@@ -539,15 +559,13 @@ def assign_concern_to_sme(concern_id):
 @app.route("/manager/concerns")
 def concerns_management():
     """Concerns management dashboard"""
-    project_id = request.args.get('project_id')
+    project = get_active_project()
     
-    if project_id:
-        responses = StakeholderResponse.query.filter_by(project_id=project_id).filter(StakeholderResponse.concern.isnot(None)).all()
-        project = ChangeProject.query.get_or_404(project_id)
-        assignments = ConcernAssignment.query.filter_by(project_id=project_id).filter(ConcernAssignment.status != 'archived').all()
+    if project:
+        responses = StakeholderResponse.query.filter_by(project_id=project.id).filter(StakeholderResponse.concern.isnot(None)).all()
+        assignments = ConcernAssignment.query.filter_by(project_id=project.id).filter(ConcernAssignment.status != 'archived').all()
     else:
         responses = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None)).all()
-        project = None
         assignments = ConcernAssignment.query.filter(ConcernAssignment.status != 'archived').all()
     
     projects = ChangeProject.query.filter_by(is_active=True).all()
@@ -1099,12 +1117,12 @@ def toggle_project_status(project_id):
 @app.route("/manager/generate-faq")
 def generate_faq():
     """Generate FAQ based on common concerns"""
-    project_id = request.args.get('project_id', type=int)
+    active_project = get_active_project()
     
-    if project_id:
+    if active_project:
         responses = StakeholderResponse.query.filter(
             StakeholderResponse.concern.isnot(None),
-            StakeholderResponse.project_id == project_id
+            StakeholderResponse.project_id == active_project.id
         ).all()
     else:
         responses = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None)).all()
@@ -1217,14 +1235,12 @@ def stakeholder_portal(response_id):
 @app.route("/manager/communications")
 def communications_center():
     """Communication center for sending personalized messages"""
-    project_id = request.args.get('project_id', type=int)
+    project = get_active_project()
     
-    if project_id:
-        responses = StakeholderResponse.query.filter_by(project_id=project_id, opted_out=False).all()
-        project = ChangeProject.query.get(project_id)
+    if project:
+        responses = StakeholderResponse.query.filter_by(project_id=project.id, opted_out=False).all()
     else:
         responses = StakeholderResponse.query.filter_by(opted_out=False).all()
-        project = None
     
     projects = ChangeProject.query.filter_by(is_active=True).all()
     

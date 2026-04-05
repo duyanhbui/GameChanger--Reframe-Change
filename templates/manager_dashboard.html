@@ -93,11 +93,11 @@
             </div>
             <div class="col-md-2">
                 <div class="d-grid gap-2">
-                    <a href="/manager/concerns{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-outline-primary">
+                    <a href="/manager/concerns" class="btn btn-outline-primary">
                         <i data-feather="message-circle" class="me-2"></i>
                         Manage Concerns
                     </a>
-                    <a href="/manager/communications{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-outline-success">
+                    <a href="/manager/communications" class="btn btn-outline-success">
                         <i data-feather="mail" class="me-2"></i>
                         Communications
                     </a>
@@ -125,7 +125,7 @@
                                     <i data-feather="info" class="me-1"></i>
                                     Showing data for: <strong>{{ selected_project.name }}</strong>
                                 </small>
-                                <a href="/manager" class="btn btn-outline-secondary btn-sm mt-1">
+                                <a href="/manager/clear-project?next=/manager" class="btn btn-outline-secondary btn-sm mt-1">
                                     <i data-feather="x" class="me-1"></i>
                                     Clear Filter
                                 </a>
@@ -284,7 +284,7 @@
                     </div>
                     <div class="card-body d-flex flex-column">
                         <div class="list-group list-group-flush flex-grow-1">
-                            <a href="/manager/concerns{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <a href="/manager/concerns" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                                 <div>
                                     <i data-feather="message-circle" class="me-2"></i>
                                     Manage Concerns
@@ -297,11 +297,11 @@
                                 <i data-feather="folder" class="me-2"></i>
                                 Project Settings
                             </a>
-                            <a href="/manager/generate-faq{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="list-group-item list-group-item-action">
+                            <a href="/manager/generate-faq" class="list-group-item list-group-item-action">
                                 <i data-feather="help-circle" class="me-2"></i>
                                 Generate FAQ
                             </a>
-                            <a href="/manager/export{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="list-group-item list-group-item-action">
+                            <a href="/manager/export" class="list-group-item list-group-item-action">
                                 <i data-feather="download" class="me-2"></i>
                                 Export Data
                             </a>
@@ -326,11 +326,11 @@
                                     <i data-feather="folder" class="me-1"></i>
                                     Manage Projects
                                 </a>
-                                <a href="/manager/export{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-outline-primary">
+                                <a href="/manager/export" class="btn btn-outline-primary">
                                     <i data-feather="download" class="me-1"></i>
                                     Export Data
                                 </a>
-                                <a href="/manager/generate-faq{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-outline-secondary">
+                                <a href="/manager/generate-faq" class="btn btn-outline-secondary">
                                     <i data-feather="help-circle" class="me-1"></i>
                                     Generate FAQ
                                 </a>
@@ -515,7 +515,7 @@
                             </h4>
                             <small class="text-muted">Latest concerns requiring attention</small>
                         </div>
-                        <a href="/manager/concerns{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-primary btn-sm">
+                        <a href="/manager/concerns" class="btn btn-primary btn-sm">
                             <i data-feather="settings" class="me-1"></i>
                             Manage All Concerns
                         </a>
@@ -560,7 +560,7 @@
                                         <div class="text-center">
                                             <span class="badge bg-warning mb-2">Unassigned</span>
                                             <div>
-                                                <a href="/manager/concerns{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-outline-primary btn-sm">
+                                                <a href="/manager/concerns" class="btn btn-outline-primary btn-sm">
                                                     <i data-feather="arrow-right" class="me-1"></i>
                                                     Assign
                                                 </a>
@@ -574,7 +574,7 @@
                         
                         {% if concerns|length > 5 %}
                         <div class="text-center">
-                            <a href="/manager/concerns{% if selected_project %}?project_id={{ selected_project.id }}{% endif %}" class="btn btn-outline-secondary">
+                            <a href="/manager/concerns" class="btn btn-outline-secondary">
                                 <i data-feather="more-horizontal" class="me-2"></i>
                                 View {{ concerns|length - 5 }} more concerns
                             </a>
@@ -798,7 +798,7 @@
             if (projectId) {
                 window.location.href = `/manager?project_id=${projectId}`;
             } else {
-                window.location.href = '/manager';
+                window.location.href = '/manager/clear-project?next=/manager';
             }
         }
         

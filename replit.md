@@ -33,7 +33,7 @@ A Flask-based change management platform for assessing stakeholder sentiment, ge
 - `/manager/communications` - Communication center (accepts `project_id`)
 
 ## Project-Scoped Navigation
-Navigation links propagate `project_id` across Dashboard, Concerns, Communications, and other manager views. When a specific project is selected, the context is preserved across page navigation.
+The active project is stored in the Flask session via `get_active_project()` / `get_active_project_id()` helpers. When a project is selected (via URL param or dropdown), it persists in the session across Dashboard, Concerns, Communications, FAQ, and Export pages. The `/manager/clear-project` route clears the session-stored project filter.
 
 ## File Uploads
 - Supported formats: PDF, DOC, DOCX, TXT
