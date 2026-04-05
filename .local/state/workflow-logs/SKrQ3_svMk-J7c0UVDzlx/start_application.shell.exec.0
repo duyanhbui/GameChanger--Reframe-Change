@@ -1,0 +1,7 @@
+[2026-04-05 07:15:42 +0000] [5365] [INFO] Starting gunicorn 23.0.0
+[2026-04-05 07:15:42 +0000] [5365] [INFO] Listening at: http://0.0.0.0:5000 (5365)
+[2026-04-05 07:15:42 +0000] [5365] [INFO] Using worker: sync
+[2026-04-05 07:15:42 +0000] [5376] [INFO] Booting worker with pid: 5376
+[2026-04-05 07:15:58 +0000] [5365] [INFO] Handling signal: term
+[2026-04-05 07:15:58 +0000] [5376] [INFO] Worker exiting (pid: 5376)
+[2026-04-05 07:15:59 +0000] [5365] [INFO] Shutting down: Master

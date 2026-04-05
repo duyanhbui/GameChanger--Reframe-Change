@@ -1,0 +1,7 @@
+[2026-04-05 07:58:53 +0000] [452] [INFO] Starting gunicorn 23.0.0
+[2026-04-05 07:58:53 +0000] [452] [INFO] Listening at: http://0.0.0.0:5000 (452)
+[2026-04-05 07:58:53 +0000] [452] [INFO] Using worker: sync
+[2026-04-05 07:58:53 +0000] [463] [INFO] Booting worker with pid: 463
+[2026-04-05 08:05:08 +0000] [452] [INFO] Handling signal: term
+[2026-04-05 08:05:08 +0000] [463] [INFO] Worker exiting (pid: 463)
+[2026-04-05 08:05:08 +0000] [452] [INFO] Shutting down: Master

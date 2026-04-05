@@ -1,0 +1,10 @@
+[2026-04-05 09:02:25 +0000] [2828] [INFO] Starting gunicorn 23.0.0
+[2026-04-05 09:02:25 +0000] [2828] [INFO] Listening at: http://0.0.0.0:5000 (2828)
+[2026-04-05 09:02:25 +0000] [2828] [INFO] Using worker: sync
+[2026-04-05 09:02:25 +0000] [2839] [INFO] Booting worker with pid: 2839
+[2026-04-05 09:26:29 +0000] [2839] [INFO] Worker reloading: /home/runner/workspace/ai_response_service.py modified
+[2026-04-05 09:26:29 +0000] [2839] [INFO] Worker exiting (pid: 2839)
+[2026-04-05 09:26:29 +0000] [3122] [INFO] Booting worker with pid: 3122
+[2026-04-05 09:26:31 +0000] [2828] [INFO] Handling signal: term
+[2026-04-05 09:26:31 +0000] [3122] [INFO] Worker exiting (pid: 3122)
+[2026-04-05 09:26:31 +0000] [2828] [INFO] Shutting down: Master

@@ -1,0 +1,10 @@
+[2026-04-05 07:14:41 +0000] [5143] [INFO] Starting gunicorn 23.0.0
+[2026-04-05 07:14:41 +0000] [5143] [INFO] Listening at: http://0.0.0.0:5000 (5143)
+[2026-04-05 07:14:41 +0000] [5143] [INFO] Using worker: sync
+[2026-04-05 07:14:41 +0000] [5154] [INFO] Booting worker with pid: 5154
+[2026-04-05 07:14:47 +0000] [5154] [INFO] Worker reloading: /home/runner/workspace/main.py modified
+[2026-04-05 07:14:47 +0000] [5154] [INFO] Worker exiting (pid: 5154)
+[2026-04-05 07:14:47 +0000] [5156] [INFO] Booting worker with pid: 5156
+[2026-04-05 07:14:56 +0000] [5143] [INFO] Handling signal: term
+[2026-04-05 07:14:56 +0000] [5156] [INFO] Worker exiting (pid: 5156)
+[2026-04-05 07:14:57 +0000] [5143] [INFO] Shutting down: Master

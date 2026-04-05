@@ -1,6 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash
 from app import app, db
-from models import AssessmentResponse
 from forms import AssessmentForm
 from mental_models import calculate_mental_model, get_mental_model_data, MENTAL_MODELS
 from datetime import datetime
@@ -13,6 +12,8 @@ def index():
 @app.route('/assessment', methods=['GET', 'POST'])
 def assessment():
     """Assessment questionnaire page"""
+    from models import AssessmentResponse
+    
     form = AssessmentForm()
     
     if form.validate_on_submit():
@@ -51,6 +52,8 @@ def assessment():
 @app.route('/result/<model_id>/<int:response_id>')
 def result(model_id, response_id=None):
     """Display assessment results"""
+    from models import AssessmentResponse
+    
     mental_model_data = get_mental_model_data(model_id)
     
     response = None
@@ -65,6 +68,8 @@ def result(model_id, response_id=None):
 @app.route('/admin')
 def admin():
     """Admin dashboard to view all responses"""
+    from models import AssessmentResponse
+    
     responses = AssessmentResponse.query.order_by(AssessmentResponse.timestamp.desc()).all()
     
     # Calculate statistics

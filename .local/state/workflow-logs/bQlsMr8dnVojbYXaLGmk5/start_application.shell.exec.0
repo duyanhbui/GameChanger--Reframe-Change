@@ -1,0 +1,7 @@
+[2026-04-05 09:26:31 +0000] [3136] [INFO] Starting gunicorn 23.0.0
+[2026-04-05 09:26:31 +0000] [3136] [INFO] Listening at: http://0.0.0.0:5000 (3136)
+[2026-04-05 09:26:31 +0000] [3136] [INFO] Using worker: sync
+[2026-04-05 09:26:31 +0000] [3147] [INFO] Booting worker with pid: 3147
+[2026-04-05 09:26:40 +0000] [3136] [INFO] Handling signal: term
+[2026-04-05 09:26:40 +0000] [3147] [INFO] Worker exiting (pid: 3147)
+[2026-04-05 09:26:40 +0000] [3136] [INFO] Shutting down: Master

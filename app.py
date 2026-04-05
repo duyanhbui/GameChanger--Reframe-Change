@@ -28,10 +28,15 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize the app with the extension
 db.init_app(app)
 
-with app.app_context():
-    # Make sure to import the models here or their tables won't be created
-    import models  # noqa: F401
-    db.create_all()
+# Need to defer these imports to after app creation to avoid circular imports
+def initialize_app():
+    with app.app_context():
+        # Make sure to import the models here or their tables won't be created
+        import models  # noqa: F401
+        db.create_all()
 
-# Import routes after app initialization
-import routes  # noqa: F401
+    # Import routes AFTER models are fully initialized
+    import routes  # noqa: F401
+
+if __name__ != 'werkzeug.serving':
+    initialize_app()

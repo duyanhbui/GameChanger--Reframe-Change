@@ -1,0 +1,25 @@
+[2026-04-05 07:14:57 +0000] [5201] [INFO] Starting gunicorn 23.0.0
+[2026-04-05 07:14:57 +0000] [5201] [INFO] Listening at: http://0.0.0.0:5000 (5201)
+[2026-04-05 07:14:57 +0000] [5201] [INFO] Using worker: sync
+[2026-04-05 07:14:57 +0000] [5212] [INFO] Booting worker with pid: 5212
+[2026-04-05 07:15:02 +0000] [5212] [INFO] Worker reloading: /home/runner/workspace/main.py modified
+[2026-04-05 07:15:02 +0000] [5212] [INFO] Worker exiting (pid: 5212)
+[2026-04-05 07:15:02 +0000] [5214] [INFO] Booting worker with pid: 5214
+[2026-04-05 07:15:04 +0000] [5214] [INFO] Worker reloading: /home/runner/workspace/main.py modified
+[2026-04-05 07:15:04 +0000] [5214] [INFO] Worker exiting (pid: 5214)
+[2026-04-05 07:15:04 +0000] [5216] [INFO] Booting worker with pid: 5216
+[2026-04-05 07:15:06 +0000] [5216] [INFO] Worker reloading: /home/runner/workspace/main.py modified
+[2026-04-05 07:15:06 +0000] [5216] [INFO] Worker exiting (pid: 5216)
+[2026-04-05 07:15:06 +0000] [5236] [INFO] Booting worker with pid: 5236
+[2026-04-05 07:15:13 +0000] [5236] [INFO] Worker reloading: /home/runner/workspace/main.py modified
+[2026-04-05 07:15:13 +0000] [5236] [INFO] Worker exiting (pid: 5236)
+[2026-04-05 07:15:14 +0000] [5269] [INFO] Booting worker with pid: 5269
+[2026-04-05 07:15:21 +0000] [5269] [INFO] Worker reloading: /home/runner/workspace/main.py modified
+[2026-04-05 07:15:21 +0000] [5269] [INFO] Worker exiting (pid: 5269)
+[2026-04-05 07:15:22 +0000] [5302] [INFO] Booting worker with pid: 5302
+[2026-04-05 07:15:28 +0000] [5302] [INFO] Worker reloading: /home/runner/workspace/main.py modified
+[2026-04-05 07:15:28 +0000] [5302] [INFO] Worker exiting (pid: 5302)
+[2026-04-05 07:15:28 +0000] [5304] [INFO] Booting worker with pid: 5304
+[2026-04-05 07:15:28 +0000] [5201] [INFO] Handling signal: term
+[2026-04-05 07:15:29 +0000] [5304] [INFO] Worker exiting (pid: 5304)
+[2026-04-05 07:15:29 +0000] [5201] [INFO] Shutting down: Master
