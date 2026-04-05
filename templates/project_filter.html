@@ -1,0 +1,117 @@
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold mb-1">Search Projects</label>
+                <input type="text" id="projectSearchInput" class="form-control" placeholder="Type to search projects..." autocomplete="off">
+                <div id="projectSearchResults" class="list-group position-absolute shadow-sm" style="z-index:1050; display:none; max-height:250px; overflow-y:auto; width:calc(100% - 24px);"></div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold mb-1">Status</label>
+                <select id="projectStatusFilter" class="form-select" onchange="applyProjectFilter()">
+                    <option value="active" {{ 'selected' if not request.args.get('show_inactive') }}>Active Projects</option>
+                    <option value="all">All Projects</option>
+                    <option value="inactive">Inactive Only</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold mb-1">Company</label>
+                <select id="projectCompanyFilter" class="form-select" onchange="applyProjectFilter()">
+                    <option value="">All Companies</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                {% if selected_project is defined and selected_project %}
+                <a href="{{ url_for('clear_active_project', next=request.path) }}" class="btn btn-outline-secondary w-100">
+                    <i data-feather="x" style="width:14px;height:14px" class="me-1"></i>Clear Filter
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% if selected_project is defined and selected_project %}
+        <div class="mt-2">
+            <span class="badge bg-primary fs-6 py-2 px-3">
+                <i data-feather="folder" style="width:14px;height:14px" class="me-1"></i>
+                {{ selected_project.name }}
+                {% if selected_project.company %}
+                <span class="ms-1 opacity-75">- {{ selected_project.company.name }}</span>
+                {% endif %}
+            </span>
+        </div>
+        {% elif current_project is defined and current_project %}
+        <div class="mt-2">
+            <span class="badge bg-primary fs-6 py-2 px-3">
+                <i data-feather="folder" style="width:14px;height:14px" class="me-1"></i>
+                {{ current_project.name }}
+                {% if current_project.company %}
+                <span class="ms-1 opacity-75">- {{ current_project.company.name }}</span>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('projectSearchInput');
+    const resultsDiv = document.getElementById('projectSearchResults');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => searchProjects(), 250);
+    });
+
+    searchInput.addEventListener('focus', function() {
+        if (this.value.length > 0) searchProjects();
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+            resultsDiv.style.display = 'none';
+        }
+    });
+
+    function searchProjects() {
+        const q = searchInput.value.trim();
+        const status = document.getElementById('projectStatusFilter').value;
+        const companyId = document.getElementById('projectCompanyFilter').value;
+        let url = `/api/projects/search?q=${encodeURIComponent(q)}&status=${status}`;
+        if (companyId) url += `&company_id=${companyId}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(projects => {
+                resultsDiv.innerHTML = '';
+                if (projects.length === 0) {
+                    resultsDiv.innerHTML = '<div class="list-group-item text-muted">No projects found</div>';
+                } else {
+                    projects.forEach(p => {
+                        const item = document.createElement('a');
+                        item.href = `${window.location.pathname}?project_id=${p.id}`;
+                        item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                        item.innerHTML = `
+                            <div>
+                                <strong>${p.name}</strong>
+                                <br><small class="text-muted">${p.company_name}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-${p.is_active ? 'success' : 'secondary'}">${p.is_active ? 'Active' : 'Inactive'}</span>
+                                <br><small class="text-muted">${p.response_count} responses</small>
+                            </div>`;
+                        resultsDiv.appendChild(item);
+                    });
+                }
+                resultsDiv.style.display = 'block';
+            });
+    }
+
+    window.applyProjectFilter = function() {
+        searchProjects();
+    };
+})();
+</script>

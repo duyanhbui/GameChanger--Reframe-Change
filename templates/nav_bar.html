@@ -1,0 +1,61 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="{{ url_for('manager_dashboard') }}">Reframe Change</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('manager_dashboard') }}">
+                        <i data-feather="bar-chart-2" style="width:16px;height:16px" class="me-1"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('project_management') }}">
+                        <i data-feather="folder" style="width:16px;height:16px" class="me-1"></i>Projects
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('concerns_management') }}">
+                        <i data-feather="message-circle" style="width:16px;height:16px" class="me-1"></i>Concerns
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('communications_center') }}">
+                        <i data-feather="mail" style="width:16px;height:16px" class="me-1"></i>Communications
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('communication_schedules') }}">
+                        <i data-feather="clock" style="width:16px;height:16px" class="me-1"></i>Schedules
+                    </a>
+                </li>
+                {% if current_user.is_admin %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i data-feather="settings" style="width:16px;height:16px" class="me-1"></i>Admin
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">Manage Users</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('admin_companies') }}">Manage Companies</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i data-feather="user" style="width:16px;height:16px" class="me-1"></i>{{ current_user.display_name }}
+                        {% if current_user.is_admin %}<span class="badge bg-danger ms-1">Admin</span>{% endif %}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text text-muted">{{ current_user.email }}</span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign Out</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

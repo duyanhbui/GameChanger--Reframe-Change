@@ -1,0 +1,97 @@
+Please make the following upgrades to the web app.
+
+1. Improve all project filters
+- Replace the current project filter dropdown with a searchable filter bar.
+- When searching, it should show both active and inactive projects.
+- Add filter options so users can:
+  - view all projects
+  - view only active projects
+  - view only inactive projects
+- Also add filtering by company, based on which companies the designated change manager has access to.
+- The project search/filter should be easy to use across all pages where project filtering exists.
+
+2. Add access level control / user roles
+Currently the app does not have proper access control. I want a permission structure added.
+
+On the Reframe Change side:
+- Add an Admin role.
+- Admin should have all abilities that a Change Manager has.
+- Admin should also have extra abilities to:
+  - create change manager accounts
+  - manage login/signup for change managers
+  - assign a change manager to one or more specific companies
+  - give a change manager access to all projects under their assigned company/companies
+  - manage/edit/remove these assignments later
+
+Change Manager role:
+- A Change Manager should only be able to access the companies and projects they are assigned to.
+- They should not see companies or projects outside their permissions.
+
+Authentication:
+- Add login and signup flow to support this.
+- Make sure role and company/project access are enforced after login.
+
+3. Suggestions for how specific companies should be involved in the web app
+Right now, the app does not really include a proper company-side role or company-specific options.
+Please suggest and, where suitable, scaffold a clean approach for how a specific company can be involved in the system.
+
+Suggested direction:
+- Add a Company profile/entity in the system
+- Each project belongs to a company
+- A company can have one or more assigned change managers
+- Consider whether the company should also have its own limited user role, such as:
+  - Company Admin
+  - Company Representative
+  - Project Sponsor
+- These company-side users could potentially:
+  - view their company’s projects
+  - upload company-specific documents
+  - review dashboards for their company
+  - monitor stakeholder concerns and engagement
+  - approve or review communication plans
+- Please recommend the best structure and implement a sensible foundation that fits the app.
+
+4. Concern Management page improvements
+In the Concern Management page, add search and filtering options so concerns can be filtered by:
+- author name
+- specific department
+- date
+- time frame / date range
+
+This should make it easier to find and review concerns quickly.
+
+5. Communication Frequency Automation
+Currently the app stores communication preferences such as:
+- fortnightly
+- key phases
+- minimal
+
+But these preferences are not actually being used.
+
+Please make this functional.
+
+Required behavior:
+- Use the stored communication frequency preference to drive automated pulse check scheduling.
+- Support sending communications by email.
+- Emails should include a link to the pulse checks.
+- Allow communications to be filtered or scheduled based on the selected preference.
+
+Suggested logic:
+- Fortnightly:
+  - schedule regular pulse check emails every 2 weeks
+- Key phases:
+  - schedule pulse checks around important project milestones/phases
+- Minimal:
+  - send only limited essential pulse checks
+
+Also:
+- Make the automation manageable from the app
+- Allow users/admins to view or adjust the communication schedule
+- Make sure this integrates properly with project and stakeholder data
+
+6. General implementation expectations
+- Keep the UI clean and consistent with the current app
+- Make filters reusable across pages where possible
+- Make role/access control secure and enforce it in both frontend and backend
+- Preserve project/company context correctly when navigating between pages
+- Build this in a scalable way so more roles and companies can be added later

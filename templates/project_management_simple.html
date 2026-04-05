@@ -8,8 +8,8 @@
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
-    <div class="container py-5">
-        <!-- Header -->
+    {% include 'nav_bar.html' %}
+    <div class="container-fluid py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="display-6">
@@ -19,10 +19,6 @@
                 <p class="lead">Manage your change management projects</p>
             </div>
             <div>
-                <a href="/manager" class="btn btn-outline-secondary me-2">
-                    <i data-feather="bar-chart-2" class="me-2"></i>
-                    Dashboard
-                </a>
                 <a href="/manager/projects/create" class="btn btn-primary">
                     <i data-feather="plus" class="me-2"></i>
                     New Project
@@ -47,6 +43,7 @@
                                 <thead>
                                     <tr>
                                         <th>Project Name</th>
+                                        <th>Company</th>
                                         <th>Status</th>
                                         <th>Created</th>
                                         <th>Responses</th>
@@ -60,6 +57,13 @@
                                             <strong>{{ project.name }}</strong>
                                             {% if project.description %}
                                             <br><small class="text-muted">{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if project.company %}
+                                            <span class="badge bg-light text-dark">{{ project.company.name }}</span>
+                                            {% else %}
+                                            <span class="text-muted">Unassigned</span>
                                             {% endif %}
                                         </td>
                                         <td>
@@ -172,7 +176,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                if (data.status === 'success' || data.success) {
                     location.reload();
                 } else {
                     alert('Error updating project status');

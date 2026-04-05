@@ -8,51 +8,54 @@
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
-    <div class="container py-5">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="display-6">
-                    <i data-feather="message-circle" class="me-3"></i>
-                    Concerns Management
-                </h1>
-                <p class="lead">Assign concerns to SMEs and track responses</p>
-            </div>
-            <div>
-                <a href="/manager" class="btn btn-outline-secondary me-2">
-                    <i data-feather="bar-chart-2" class="me-2"></i>
-                    Dashboard
-                </a>
-                <a href="/manager/communications" class="btn btn-outline-success me-2">
-                    <i data-feather="mail" class="me-2"></i>
-                    Communications
-                </a>
-                <a href="/manager/projects" class="btn btn-outline-primary">
-                    <i data-feather="folder" class="me-2"></i>
-                    Projects
-                </a>
-            </div>
+    {% include 'nav_bar.html' %}
+    <div class="container-fluid py-4">
+        <div class="mb-4">
+            <h1 class="display-6">
+                <i data-feather="message-circle" class="me-3"></i>
+                Concerns Management
+            </h1>
+            <p class="lead">Assign concerns to SMEs and track responses</p>
         </div>
 
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <label class="form-label"><strong>Project Filter:</strong></label>
-                <select class="form-select" id="projectFilter" onchange="filterByProject()">
-                    <option value="">All Projects</option>
-                    {% for project in projects %}
-                    <option value="{{ project.id }}" {% if current_project and current_project.id == project.id %}selected{% endif %}>
-                        {{ project.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-                {% if current_project %}
-                <div class="mt-2">
-                    <small class="text-muted">Showing data for: <strong>{{ current_project.name }}</strong></small>
-                    <a href="/manager/clear-project?next=/manager/concerns" class="btn btn-outline-secondary btn-sm ms-2">
-                        <i data-feather="x" class="me-1"></i>Clear Filter
-                    </a>
-                </div>
-                {% endif %}
+        {% include 'project_filter.html' %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">Search & Filter Concerns</h6>
+                <form method="GET" action="{{ url_for('concerns_management') }}">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="text" name="search_name" class="form-control" placeholder="Search by author name..." value="{{ search_name }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="search_dept" class="form-select">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept }}" {{ 'selected' if search_dept == dept }}>{{ dept }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}" placeholder="From date">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}" placeholder="To date">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i data-feather="search" style="width:14px;height:14px" class="me-1"></i>Filter
+                            </button>
+                        </div>
+                    </div>
+                    {% if search_name or search_dept or date_from or date_to %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('concerns_management') }}" class="btn btn-sm btn-outline-secondary">
+                            <i data-feather="x" style="width:14px;height:14px" class="me-1"></i>Clear Search Filters
+                        </a>
+                    </div>
+                    {% endif %}
+                </form>
             </div>
         </div>
 

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Companies - Reframe Change</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>body { background-color: #f8f9fa; }</style>
+</head>
+<body>
+    {% include 'nav_bar.html' %}
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 fw-bold">Company Management</h1>
+                <p class="text-muted">Manage companies and their project assignments</p>
+            </div>
+            <div>
+                <a href="{{ url_for('admin_create_company') }}" class="btn btn-primary">
+                    <i data-feather="plus-circle" class="me-2"></i>Add Company
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-outline-secondary ms-2">
+                    <i data-feather="users" class="me-2"></i>Users
+                </a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}{% endwith %}
+
+        <div class="row">
+            {% for company in companies %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold mb-0">{{ company.name }}</h5>
+                            {% if company.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                        {% if company.industry %}
+                        <p class="text-muted mb-2"><small>{{ company.industry }}</small></p>
+                        {% endif %}
+                        {% if company.description %}
+                        <p class="card-text small">{{ company.description[:100] }}{% if company.description|length > 100 %}...{% endif %}</p>
+                        {% endif %}
+                        <div class="d-flex gap-2 mb-3">
+                            <span class="badge bg-light text-dark">
+                                <i data-feather="folder" style="width:14px;height:14px" class="me-1"></i>{{ company.projects|length }} Projects
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i data-feather="users" style="width:14px;height:14px" class="me-1"></i>{{ company.user_access|length }} Managers
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="{{ url_for('admin_edit_company', company_id=company.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i data-feather="edit-2" class="me-1"></i>Edit
+                        </a>
+                        <button class="btn btn-sm btn-outline-{{ 'warning' if company.is_active else 'success' }}" onclick="toggleCompany({{ company.id }})">
+                            {{ 'Deactivate' if company.is_active else 'Activate' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i data-feather="briefcase" style="width:48px;height:48px" class="text-muted mb-3"></i>
+                    <h5>No companies yet</h5>
+                    <p class="text-muted">Create your first company to start organizing projects.</p>
+                    <a href="{{ url_for('admin_create_company') }}" class="btn btn-primary">Add Company</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        feather.replace();
+        function toggleCompany(companyId) {
+            fetch(`/admin/companies/${companyId}/toggle`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => { if (data.status === 'success') location.reload(); });
+        }
+    </script>
+</body>
+</html>

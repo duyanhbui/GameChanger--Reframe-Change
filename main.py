@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, date
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, date, timedelta
 from werkzeug.utils import secure_filename
+from functools import wraps
 import os
 import PyPDF2
 from dateutil import parser
@@ -9,17 +12,18 @@ import uuid
 from email_service import send_concern_assignment_email, send_response_notification_email
 from ai_response_service import generate_ai_response_suggestion, get_existing_faqs
 from departments import DEPARTMENTS
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "change-management-key")
 
-# File upload configuration
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-# Create upload directory if it doesn't exist
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -27,7 +31,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def extract_text_from_pdf(file_path):
-    """Extract text content from PDF file"""
     try:
         with open(file_path, 'rb') as file:
             pdf_reader = PyPDF2.PdfReader(file)
@@ -38,7 +41,6 @@ def extract_text_from_pdf(file_path):
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
-# Database setup
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///change_assessment.db")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
@@ -46,7 +48,135 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 db = SQLAlchemy(app)
 
-# Models
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'info'
+
+# --- Models ---
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    first_name = db.Column(db.String(64))
+    last_name = db.Column(db.String(64))
+    role = db.Column(db.String(20), nullable=False, default='change_manager')
+    is_active_user = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    company_access = db.relationship('UserCompanyAccess', backref='user', lazy=True, cascade='all, delete-orphan')
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+
+    @property
+    def display_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
+
+    def has_company_access(self, company_id):
+        if self.is_admin:
+            return True
+        return any(a.company_id == company_id for a in self.company_access)
+
+    def has_project_access(self, project):
+        if self.is_admin:
+            return True
+        if project.company_id is None:
+            return True
+        return self.has_company_access(project.company_id)
+
+    def get_accessible_company_ids(self):
+        if self.is_admin:
+            return [c.id for c in Company.query.all()]
+        return [a.company_id for a in self.company_access]
+
+    def get_accessible_projects(self, include_inactive=False):
+        if self.is_admin:
+            q = ChangeProject.query
+        else:
+            accessible_company_ids = self.get_accessible_company_ids()
+            q = ChangeProject.query.filter(
+                db.or_(
+                    ChangeProject.company_id.in_(accessible_company_ids),
+                    ChangeProject.company_id.is_(None)
+                )
+            )
+        if not include_inactive:
+            q = q.filter_by(is_active=True)
+        return q.all()
+
+class Company(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    industry = db.Column(db.String(100))
+    contact_email = db.Column(db.String(120))
+    contact_phone = db.Column(db.String(30))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    projects = db.relationship('ChangeProject', backref='company', lazy=True)
+    user_access = db.relationship('UserCompanyAccess', backref='company', lazy=True, cascade='all, delete-orphan')
+
+class UserCompanyAccess(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'company_id'),)
+
+class CommunicationSchedule(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('change_project.id'), nullable=False)
+    frequency = db.Column(db.String(20), nullable=False)
+    subject = db.Column(db.String(200))
+    message_template = db.Column(db.Text)
+    next_send_date = db.Column(db.Date)
+    last_sent_date = db.Column(db.Date)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    project = db.relationship('ChangeProject', backref='communication_schedules')
+    created_by = db.relationship('User')
+
+class CommunicationLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    schedule_id = db.Column(db.Integer, db.ForeignKey('communication_schedule.id'))
+    project_id = db.Column(db.Integer, db.ForeignKey('change_project.id'), nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    recipients_count = db.Column(db.Integer, default=0)
+    subject = db.Column(db.String(200))
+    status = db.Column(db.String(20), default='sent')
+
+    schedule = db.relationship('CommunicationSchedule', backref='logs')
+    project = db.relationship('ChangeProject', backref='communication_logs')
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash("Admin access required.", "error")
+            return redirect(url_for('manager_dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def manager_login_required(f):
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        return f(*args, **kwargs)
+    return decorated_function
+
 class StakeholderResponse(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
@@ -115,9 +245,9 @@ class ChangeProject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200))
     description = db.Column(db.Text)
-    
-    # Strategy Components (text and file uploads)
-    bcip = db.Column(db.Text)  # Business Case & Implementation Plan
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)
+
+    bcip = db.Column(db.Text)
     bcip_document_path = db.Column(db.String(500))  # Uploaded BCIP document
     bcip_document_name = db.Column(db.String(200))  # Original BCIP filename
     
@@ -181,20 +311,350 @@ def get_active_project_id():
     return session.get('active_project_id')
 
 def get_active_project():
-    """Get the active project object from URL params or session."""
+    """Get the active project object from URL params or session, with access control."""
     project_id = get_active_project_id()
     if project_id:
         project = ChangeProject.query.get(project_id)
-        if project:
+        if project and current_user.is_authenticated and current_user.has_project_access(project):
             return project
         session.pop('active_project_id', None)
     return None
 
 @app.route("/manager/clear-project")
+@manager_login_required
 def clear_active_project():
-    """Clear the active project filter and return to all-projects view."""
     session.pop('active_project_id', None)
     return redirect(request.args.get('next', url_for('manager_dashboard')))
+
+# --- Auth Routes ---
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('manager_dashboard'))
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            if not user.is_active_user:
+                flash("Your account has been deactivated. Contact an administrator.", "error")
+                return render_template("login.html")
+            login_user(user, remember=True)
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('manager_dashboard'))
+        flash("Invalid username or password.", "error")
+    return render_template("login.html")
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    session.pop('active_project_id', None)
+    flash("You have been logged out.", "info")
+    return redirect(url_for('login'))
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if current_user.is_authenticated:
+        return redirect(url_for('manager_dashboard'))
+    admin_exists = User.query.filter_by(role='admin').first() is not None
+    if admin_exists:
+        flash("Registration is managed by administrators. Please contact your admin.", "info")
+        return redirect(url_for('login'))
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+        first_name = request.form.get("first_name", "").strip()
+        last_name = request.form.get("last_name", "").strip()
+        if not username or not email or not password:
+            flash("All fields are required.", "error")
+            return render_template("signup.html")
+        if password != confirm:
+            flash("Passwords do not match.", "error")
+            return render_template("signup.html")
+        if User.query.filter_by(username=username).first():
+            flash("Username already taken.", "error")
+            return render_template("signup.html")
+        if User.query.filter_by(email=email).first():
+            flash("Email already registered.", "error")
+            return render_template("signup.html")
+        user = User(
+            username=username,
+            email=email,
+            password_hash=generate_password_hash(password),
+            first_name=first_name,
+            last_name=last_name,
+            role='admin'
+        )
+        db.session.add(user)
+        db.session.commit()
+        login_user(user)
+        flash(f"Welcome! Your admin account has been created.", "success")
+        return redirect(url_for('manager_dashboard'))
+    return render_template("signup.html")
+
+# --- Admin Routes ---
+
+@app.route("/admin/users")
+@admin_required
+def admin_users():
+    users = User.query.order_by(User.created_at.desc()).all()
+    companies = Company.query.order_by(Company.name).all()
+    return render_template("admin_users.html", users=users, companies=companies)
+
+@app.route("/admin/users/create", methods=["GET", "POST"])
+@admin_required
+def admin_create_user():
+    companies = Company.query.filter_by(is_active=True).order_by(Company.name).all()
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        first_name = request.form.get("first_name", "").strip()
+        last_name = request.form.get("last_name", "").strip()
+        role = request.form.get("role", "change_manager")
+        company_ids = request.form.getlist("company_ids")
+        if not username or not email or not password:
+            flash("Username, email and password are required.", "error")
+            return render_template("admin_create_user.html", companies=companies)
+        if User.query.filter_by(username=username).first():
+            flash("Username already taken.", "error")
+            return render_template("admin_create_user.html", companies=companies)
+        if User.query.filter_by(email=email).first():
+            flash("Email already registered.", "error")
+            return render_template("admin_create_user.html", companies=companies)
+        user = User(
+            username=username,
+            email=email,
+            password_hash=generate_password_hash(password),
+            first_name=first_name,
+            last_name=last_name,
+            role=role
+        )
+        db.session.add(user)
+        db.session.flush()
+        for cid in company_ids:
+            access = UserCompanyAccess(user_id=user.id, company_id=int(cid))
+            db.session.add(access)
+        db.session.commit()
+        flash(f"User '{username}' created successfully!", "success")
+        return redirect(url_for('admin_users'))
+    return render_template("admin_create_user.html", companies=companies)
+
+@app.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+@admin_required
+def admin_edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    companies = Company.query.filter_by(is_active=True).order_by(Company.name).all()
+    if request.method == "POST":
+        user.first_name = request.form.get("first_name", "").strip()
+        user.last_name = request.form.get("last_name", "").strip()
+        user.email = request.form.get("email", "").strip()
+        user.role = request.form.get("role", "change_manager")
+        user.is_active_user = 'is_active_user' in request.form
+        new_password = request.form.get("new_password", "")
+        if new_password:
+            user.password_hash = generate_password_hash(new_password)
+        company_ids = [int(cid) for cid in request.form.getlist("company_ids")]
+        UserCompanyAccess.query.filter_by(user_id=user.id).delete()
+        for cid in company_ids:
+            db.session.add(UserCompanyAccess(user_id=user.id, company_id=cid))
+        db.session.commit()
+        flash(f"User '{user.username}' updated.", "success")
+        return redirect(url_for('admin_users'))
+    user_company_ids = [a.company_id for a in user.company_access]
+    return render_template("admin_edit_user.html", edit_user=user, companies=companies, user_company_ids=user_company_ids)
+
+@app.route("/admin/users/<int:user_id>/toggle", methods=["POST"])
+@admin_required
+def admin_toggle_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        return jsonify({"status": "error", "message": "Cannot deactivate your own account"}), 400
+    user.is_active_user = not user.is_active_user
+    db.session.commit()
+    status = "activated" if user.is_active_user else "deactivated"
+    return jsonify({"status": "success", "message": f"User {status}"})
+
+@app.route("/admin/companies")
+@admin_required
+def admin_companies():
+    companies = Company.query.order_by(Company.name).all()
+    return render_template("admin_companies.html", companies=companies)
+
+@app.route("/admin/companies/create", methods=["GET", "POST"])
+@admin_required
+def admin_create_company():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        if not name:
+            flash("Company name is required.", "error")
+            return render_template("admin_create_company.html")
+        if Company.query.filter_by(name=name).first():
+            flash("A company with that name already exists.", "error")
+            return render_template("admin_create_company.html")
+        company = Company(
+            name=name,
+            description=request.form.get("description", "").strip(),
+            industry=request.form.get("industry", "").strip(),
+            contact_email=request.form.get("contact_email", "").strip(),
+            contact_phone=request.form.get("contact_phone", "").strip()
+        )
+        db.session.add(company)
+        db.session.commit()
+        flash(f"Company '{name}' created!", "success")
+        return redirect(url_for('admin_companies'))
+    return render_template("admin_create_company.html")
+
+@app.route("/admin/companies/<int:company_id>/edit", methods=["GET", "POST"])
+@admin_required
+def admin_edit_company(company_id):
+    company = Company.query.get_or_404(company_id)
+    if request.method == "POST":
+        company.name = request.form.get("name", "").strip()
+        company.description = request.form.get("description", "").strip()
+        company.industry = request.form.get("industry", "").strip()
+        company.contact_email = request.form.get("contact_email", "").strip()
+        company.contact_phone = request.form.get("contact_phone", "").strip()
+        company.is_active = 'is_active' in request.form
+        db.session.commit()
+        flash(f"Company '{company.name}' updated.", "success")
+        return redirect(url_for('admin_companies'))
+    return render_template("admin_edit_company.html", company=company)
+
+@app.route("/admin/companies/<int:company_id>/toggle", methods=["POST"])
+@admin_required
+def admin_toggle_company(company_id):
+    company = Company.query.get_or_404(company_id)
+    company.is_active = not company.is_active
+    db.session.commit()
+    status = "activated" if company.is_active else "deactivated"
+    return jsonify({"status": "success", "message": f"Company {status}"})
+
+# --- API: Searchable Project Filter ---
+
+@app.route("/api/projects/search")
+@manager_login_required
+def api_search_projects():
+    q = request.args.get('q', '').strip()
+    status = request.args.get('status', 'all')
+    company_id = request.args.get('company_id', type=int)
+    query = ChangeProject.query
+    if not current_user.is_admin:
+        accessible_ids = current_user.get_accessible_company_ids()
+        query = query.filter(
+            db.or_(
+                ChangeProject.company_id.in_(accessible_ids),
+                ChangeProject.company_id.is_(None)
+            )
+        )
+    if status == 'active':
+        query = query.filter_by(is_active=True)
+    elif status == 'inactive':
+        query = query.filter_by(is_active=False)
+    if company_id:
+        query = query.filter_by(company_id=company_id)
+    if q:
+        query = query.filter(ChangeProject.name.ilike(f'%{q}%'))
+    projects = query.order_by(ChangeProject.name).all()
+    results = []
+    for p in projects:
+        results.append({
+            'id': p.id,
+            'name': p.name,
+            'is_active': p.is_active,
+            'company_name': p.company.name if p.company else 'Unassigned',
+            'response_count': len(p.responses)
+        })
+    return jsonify(results)
+
+# --- Communication Schedule Routes ---
+
+@app.route("/manager/communications/schedules")
+@manager_login_required
+def communication_schedules():
+    project = get_active_project()
+    if project:
+        schedules = CommunicationSchedule.query.filter_by(project_id=project.id).order_by(CommunicationSchedule.next_send_date).all()
+    else:
+        accessible = current_user.get_accessible_projects(include_inactive=True)
+        project_ids = [p.id for p in accessible]
+        schedules = CommunicationSchedule.query.filter(CommunicationSchedule.project_id.in_(project_ids)).order_by(CommunicationSchedule.next_send_date).all()
+    projects = current_user.get_accessible_projects()
+    return render_template("communication_schedules.html", schedules=schedules, projects=projects, selected_project=project, today=date.today())
+
+@app.route("/manager/communications/schedules/create", methods=["GET", "POST"])
+@manager_login_required
+def create_schedule():
+    projects = current_user.get_accessible_projects()
+    if request.method == "POST":
+        project_id = request.form.get("project_id", type=int)
+        project = ChangeProject.query.get_or_404(project_id)
+        if not current_user.has_project_access(project):
+            flash("Access denied.", "error")
+            return redirect(url_for('communication_schedules'))
+        frequency = request.form.get("frequency", "fortnightly")
+        subject = request.form.get("subject", "").strip()
+        message_template = request.form.get("message_template", "").strip()
+        start_date_str = request.form.get("start_date", "")
+        if start_date_str:
+            next_send = parser.parse(start_date_str).date()
+        else:
+            next_send = date.today()
+        schedule = CommunicationSchedule(
+            project_id=project_id,
+            frequency=frequency,
+            subject=subject or f"Pulse Check - {project.name}",
+            message_template=message_template,
+            next_send_date=next_send,
+            is_active=True,
+            created_by_id=current_user.id
+        )
+        db.session.add(schedule)
+        db.session.commit()
+        flash("Communication schedule created!", "success")
+        return redirect(url_for('communication_schedules'))
+    return render_template("create_schedule.html", projects=projects)
+
+@app.route("/manager/communications/schedules/<int:schedule_id>/toggle", methods=["POST"])
+@manager_login_required
+def toggle_schedule(schedule_id):
+    schedule = CommunicationSchedule.query.get_or_404(schedule_id)
+    schedule.is_active = not schedule.is_active
+    db.session.commit()
+    return jsonify({"status": "success", "message": f"Schedule {'activated' if schedule.is_active else 'paused'}"})
+
+@app.route("/manager/communications/schedules/<int:schedule_id>/send-now", methods=["POST"])
+@manager_login_required
+def send_schedule_now(schedule_id):
+    schedule = CommunicationSchedule.query.get_or_404(schedule_id)
+    project = schedule.project
+    stakeholders = StakeholderResponse.query.filter_by(project_id=project.id, opted_out=False).all()
+    sent = 0
+    for s in stakeholders:
+        if s.email and s.frequency_preference != 'minimal':
+            sent += 1
+    log_entry = CommunicationLog(
+        schedule_id=schedule.id,
+        project_id=project.id,
+        recipients_count=sent,
+        subject=schedule.subject,
+        status='sent'
+    )
+    db.session.add(log_entry)
+    schedule.last_sent_date = date.today()
+    if schedule.frequency == 'fortnightly':
+        schedule.next_send_date = date.today() + timedelta(days=14)
+    elif schedule.frequency == 'key_phases':
+        schedule.next_send_date = date.today() + timedelta(days=30)
+    elif schedule.frequency == 'minimal':
+        schedule.next_send_date = date.today() + timedelta(days=60)
+    db.session.commit()
+    flash(f"Pulse check sent to {sent} stakeholders!", "success")
+    return redirect(url_for('communication_schedules'))
 
 # KB16 Model Logic
 def assign_model(feeling, style, focus_areas):
@@ -301,15 +761,20 @@ def submit_assessment():
         return redirect(url_for("index"))
 
 @app.route("/manager")
+@manager_login_required
 def manager_dashboard():
-    """Change manager dashboard"""
-    projects = ChangeProject.query.filter_by(is_active=True).all()
+    projects = current_user.get_accessible_projects()
+    all_projects = current_user.get_accessible_projects(include_inactive=True)
+    companies = Company.query.order_by(Company.name).all() if current_user.is_admin else Company.query.filter(Company.id.in_(current_user.get_accessible_company_ids())).all()
     selected_project = get_active_project()
     
     if selected_project:
         responses = StakeholderResponse.query.filter_by(opted_out=False, project_id=selected_project.id).all()
-    else:
+    elif current_user.is_admin:
         responses = StakeholderResponse.query.filter_by(opted_out=False).all()
+    else:
+        accessible_ids = [p.id for p in current_user.get_accessible_projects(include_inactive=True)]
+        responses = StakeholderResponse.query.filter(StakeholderResponse.opted_out == False, StakeholderResponse.project_id.in_(accessible_ids)).all()
     
     # Calculate statistics
     total_responses = len(responses)
@@ -380,6 +845,8 @@ def manager_dashboard():
                          department_breakdown=department_breakdown,
                          recommendations=recommendations,
                          projects=projects,
+                         all_projects=all_projects,
+                         companies=companies,
                          selected_project=selected_project)
 
 def generate_strategic_recommendations(model_counts, focus_counts, sentiment_analysis, total_responses, concerns, project):
@@ -536,6 +1003,7 @@ def opt_out(response_id):
     return render_template("opt_out_success.html")
 
 @app.route("/manager/concern/<int:concern_id>/assign", methods=["POST"])
+@manager_login_required
 def assign_concern_to_sme(concern_id):
     """Assign a concern to an SME"""
     sme_name = request.json.get('sme_name')
@@ -557,26 +1025,62 @@ def assign_concern_to_sme(concern_id):
     return jsonify({"status": "success", "message": "Concern assigned to SME"})
 
 @app.route("/manager/concerns")
+@manager_login_required
 def concerns_management():
-    """Concerns management dashboard"""
     project = get_active_project()
-    
+    search_name = request.args.get('search_name', '').strip()
+    search_dept = request.args.get('search_dept', '').strip()
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
+
     if project:
-        responses = StakeholderResponse.query.filter_by(project_id=project.id).filter(StakeholderResponse.concern.isnot(None)).all()
-        assignments = ConcernAssignment.query.filter_by(project_id=project.id).filter(ConcernAssignment.status != 'archived').all()
+        resp_q = StakeholderResponse.query.filter_by(project_id=project.id).filter(StakeholderResponse.concern.isnot(None))
+        assign_q = ConcernAssignment.query.filter_by(project_id=project.id).filter(ConcernAssignment.status != 'archived')
+    elif current_user.is_admin:
+        resp_q = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None))
+        assign_q = ConcernAssignment.query.filter(ConcernAssignment.status != 'archived')
     else:
-        responses = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None)).all()
-        assignments = ConcernAssignment.query.filter(ConcernAssignment.status != 'archived').all()
-    
-    projects = ChangeProject.query.filter_by(is_active=True).all()
-    
-    return render_template("concerns_management.html", 
-                         responses=responses, 
+        accessible_ids = [p.id for p in current_user.get_accessible_projects(include_inactive=True)]
+        resp_q = StakeholderResponse.query.filter(StakeholderResponse.concern.isnot(None), StakeholderResponse.project_id.in_(accessible_ids))
+        assign_q = ConcernAssignment.query.filter(ConcernAssignment.status != 'archived', ConcernAssignment.project_id.in_(accessible_ids))
+
+    if search_name:
+        resp_q = resp_q.filter(StakeholderResponse.name.ilike(f'%{search_name}%'))
+    if search_dept:
+        resp_q = resp_q.filter(StakeholderResponse.department == search_dept)
+    if date_from:
+        try:
+            from_dt = parser.parse(date_from)
+            resp_q = resp_q.filter(StakeholderResponse.timestamp >= from_dt)
+        except Exception:
+            pass
+    if date_to:
+        try:
+            to_dt = parser.parse(date_to) + timedelta(days=1)
+            resp_q = resp_q.filter(StakeholderResponse.timestamp < to_dt)
+        except Exception:
+            pass
+
+    responses = resp_q.all()
+    assignments = assign_q.all()
+    projects = current_user.get_accessible_projects()
+    companies = Company.query.order_by(Company.name).all() if current_user.is_admin else Company.query.filter(Company.id.in_(current_user.get_accessible_company_ids())).all()
+
+    return render_template("concerns_management.html",
+                         responses=responses,
                          assignments=assignments,
                          projects=projects,
-                         current_project=project)
+                         all_projects=current_user.get_accessible_projects(include_inactive=True),
+                         companies=companies,
+                         current_project=project,
+                         departments=DEPARTMENTS,
+                         search_name=search_name,
+                         search_dept=search_dept,
+                         date_from=date_from,
+                         date_to=date_to)
 
 @app.route("/manager/concerns/assign", methods=["POST"])
+@manager_login_required
 def assign_concern():
     """Assign a concern to an SME or respond directly as manager"""
     response_id = request.form.get('response_id')
@@ -669,6 +1173,7 @@ def sme_respond(assignment_id):
     return render_template("sme_response_form.html", assignment=assignment)
 
 @app.route("/manager/concerns/<int:assignment_id>/resolve", methods=["POST"])
+@manager_login_required
 def resolve_concern(assignment_id):
     """Mark a concern as resolved"""
     assignment = ConcernAssignment.query.get_or_404(assignment_id)
@@ -678,6 +1183,7 @@ def resolve_concern(assignment_id):
     return jsonify({"status": "success", "message": "Concern marked as resolved"})
 
 @app.route("/manager/concerns/<int:assignment_id>/reopen", methods=["POST"])
+@manager_login_required
 def reopen_concern(assignment_id):
     """Reopen a resolved concern"""
     assignment = ConcernAssignment.query.get_or_404(assignment_id)
@@ -687,6 +1193,7 @@ def reopen_concern(assignment_id):
     return jsonify({"status": "success", "message": "Concern reopened for further discussion"})
 
 @app.route("/manager/concerns/<int:assignment_id>/archive", methods=["POST"])
+@manager_login_required
 def archive_concern(assignment_id):
     """Archive a concern (soft delete)"""
     assignment = ConcernAssignment.query.get_or_404(assignment_id)
@@ -696,6 +1203,7 @@ def archive_concern(assignment_id):
     return jsonify({"status": "success", "message": "Concern archived"})
 
 @app.route("/manager/concerns/<int:response_id>/delete", methods=["DELETE"])
+@manager_login_required
 def delete_unassigned_concern(response_id):
     """Delete an unassigned concern"""
     try:
@@ -720,6 +1228,7 @@ def delete_unassigned_concern(response_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route("/manager/concerns/update-response", methods=["POST"])
+@manager_login_required
 def update_response():
     """Update an existing response"""
     assignment_id = request.form.get('assignment_id')
@@ -739,6 +1248,7 @@ def update_response():
     return redirect(url_for('concerns_management', project_id=assignment.project_id))
 
 @app.route("/manager/concerns/answer-directly", methods=["POST"])
+@manager_login_required
 def answer_directly():
     """Change manager answers a pending assignment directly"""
     assignment_id = request.form.get('assignment_id')
@@ -762,6 +1272,7 @@ def answer_directly():
     return redirect(url_for('concerns_management', project_id=assignment.project_id))
 
 @app.route('/api/ai-suggest-response-assignment', methods=['POST'])
+@manager_login_required
 def ai_suggest_response_assignment():
     """API endpoint for AI-powered response suggestions for assignments"""
     data = request.get_json()
@@ -801,6 +1312,7 @@ def ai_suggest_response_assignment():
     return jsonify(ai_suggestion)
 
 @app.route('/manager/concerns/add-to-faq', methods=['POST'])
+@manager_login_required
 def add_to_faq():
     """Add a resolved concern and response to the FAQ database"""
     data = request.get_json()
@@ -837,9 +1349,14 @@ def add_to_faq():
         return jsonify({"error": "Database error occurred"}), 500
 
 @app.route("/manager/export")
+@manager_login_required
 def export_data():
     """Export stakeholder data for analysis"""
-    responses = StakeholderResponse.query.filter_by(opted_out=False).all()
+    if current_user.is_admin:
+        responses = StakeholderResponse.query.filter_by(opted_out=False).all()
+    else:
+        accessible_ids = [p.id for p in current_user.get_accessible_projects(include_inactive=True)]
+        responses = StakeholderResponse.query.filter(StakeholderResponse.opted_out == False, StakeholderResponse.project_id.in_(accessible_ids)).all()
     
     export_data = []
     for response in responses:
@@ -859,28 +1376,29 @@ def export_data():
     return jsonify(export_data)
 
 @app.route("/manager/projects")
+@manager_login_required
 def project_management():
-    """Project management page"""
-    projects = ChangeProject.query.all()
-    
-    # Calculate statistics
+    projects = current_user.get_accessible_projects(include_inactive=True)
     total_responses = sum(len(project.responses) for project in projects)
     active_projects = sum(1 for project in projects if project.is_active)
-    
-    return render_template("project_management_simple.html", 
+    companies = Company.query.order_by(Company.name).all()
+    return render_template("project_management_simple.html",
                          projects=projects,
                          total_responses=total_responses,
-                         active_projects=active_projects)
+                         active_projects=active_projects,
+                         companies=companies)
 
 @app.route("/manager/projects/create", methods=["GET", "POST"])
+@manager_login_required
 def create_project():
     """Create new change project"""
     if request.method == "POST":
         project = ChangeProject()
         project.name = request.form.get("name")
         project.description = request.form.get("description")
-        
-        # Strategy Components (from uploads or text input)
+        company_id = request.form.get("company_id", type=int)
+        if company_id:
+            project.company_id = company_id
         project.bcip = request.form.get("bcip")
         project.change_logic = request.form.get("change_logic")
         project.change_story = request.form.get("change_story")
@@ -934,7 +1452,8 @@ def create_project():
                 project.assessment_end_date = parser.parse(assess_end).date()
         except ValueError:
             flash("Invalid date format. Please use valid dates.", "error")
-            return render_template("create_project.html")
+            companies = Company.query.filter_by(is_active=True).order_by(Company.name).all()
+            return render_template("create_project.html", companies=companies)
         
         # Handle file upload
         if 'strategy_document' in request.files:
@@ -963,16 +1482,19 @@ def create_project():
             db.session.rollback()
             flash("Error creating project. Please try again.", "error")
     
-    return render_template("create_project.html")
+    companies = Company.query.filter_by(is_active=True).order_by(Company.name).all()
+    return render_template("create_project.html", companies=companies)
 
 @app.route("/manager/projects/<int:project_id>/edit", methods=["GET", "POST"])
+@manager_login_required
 def edit_project(project_id):
-    """Edit an existing change project"""
     project = ChangeProject.query.get_or_404(project_id)
 
     if request.method == "POST":
         project.name = request.form.get("name")
         project.description = request.form.get("description")
+        company_id = request.form.get("company_id", type=int)
+        project.company_id = company_id if company_id else None
 
         project.bcip = request.form.get("bcip")
         project.change_logic = request.form.get("change_logic")
@@ -1029,7 +1551,8 @@ def edit_project(project_id):
             project.assessment_end_date = parser.parse(assess_end).date() if assess_end else None
         except ValueError:
             flash("Invalid date format. Please use valid dates.", "error")
-            return render_template("edit_project.html", project=project)
+            companies = Company.query.filter_by(is_active=True).order_by(Company.name).all()
+            return render_template("edit_project.html", project=project, companies=companies)
 
         if 'strategy_document' in request.files:
             file = request.files['strategy_document']
@@ -1067,9 +1590,11 @@ def edit_project(project_id):
             db.session.rollback()
             flash("Error updating project. Please try again.", "error")
 
-    return render_template("edit_project.html", project=project)
+    companies = Company.query.filter_by(is_active=True).order_by(Company.name).all()
+    return render_template("edit_project.html", project=project, companies=companies)
 
 @app.route("/manager/projects/<int:project_id>/remove-file/<file_type>", methods=["POST"])
+@manager_login_required
 def remove_project_file(project_id, file_type):
     """Remove a specific file from a project"""
     project = ChangeProject.query.get_or_404(project_id)
@@ -1105,6 +1630,7 @@ def view_project_document(project_id):
         return redirect(url_for("project_management"))
 
 @app.route("/manager/projects/<int:project_id>/toggle", methods=["POST"])
+@manager_login_required
 def toggle_project_status(project_id):
     """Toggle project active status"""
     project = ChangeProject.query.get_or_404(project_id)
@@ -1115,6 +1641,7 @@ def toggle_project_status(project_id):
     return jsonify({"status": "success", "message": f"Project {status}"})
 
 @app.route("/manager/generate-faq")
+@manager_login_required
 def generate_faq():
     """Generate FAQ based on common concerns"""
     active_project = get_active_project()
@@ -1150,6 +1677,7 @@ def generate_faq():
     return render_template("faq_generator.html", concerns_by_category=concerns_by_category)
 
 @app.route("/api/stats")
+@manager_login_required
 def get_stats():
     """API endpoint for dashboard statistics"""
     responses = StakeholderResponse.query.filter_by(opted_out=False).all()
@@ -1179,6 +1707,7 @@ def get_stats():
     return jsonify(stats)
 
 @app.route('/api/ai-suggest-response', methods=['POST'])
+@manager_login_required
 def ai_suggest_response():
     """API endpoint for AI-powered response suggestions"""
     data = request.get_json()
@@ -1233,23 +1762,27 @@ def stakeholder_portal(response_id):
                          concern_assignments=concern_assignments)
 
 @app.route("/manager/communications")
+@manager_login_required
 def communications_center():
-    """Communication center for sending personalized messages"""
     project = get_active_project()
-    
     if project:
         responses = StakeholderResponse.query.filter_by(project_id=project.id, opted_out=False).all()
-    else:
+    elif current_user.is_admin:
         responses = StakeholderResponse.query.filter_by(opted_out=False).all()
-    
-    projects = ChangeProject.query.filter_by(is_active=True).all()
-    
+    else:
+        accessible_ids = [p.id for p in current_user.get_accessible_projects(include_inactive=True)]
+        responses = StakeholderResponse.query.filter(StakeholderResponse.opted_out == False, StakeholderResponse.project_id.in_(accessible_ids)).all()
+    projects = current_user.get_accessible_projects()
+    companies = Company.query.order_by(Company.name).all() if current_user.is_admin else Company.query.filter(Company.id.in_(current_user.get_accessible_company_ids())).all()
     return render_template("communications_center.html",
                          responses=responses,
                          projects=projects,
+                         all_projects=current_user.get_accessible_projects(include_inactive=True),
+                         companies=companies,
                          selected_project=project)
 
 @app.route("/manager/send-email", methods=["POST"])
+@manager_login_required
 def send_personalized_email():
     """Send personalized email to stakeholders"""
     stakeholder_ids = request.form.getlist('stakeholder_ids')

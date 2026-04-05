@@ -81,60 +81,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    {% include 'nav_bar.html' %}
     <div class="container-fluid py-4">
-        <!-- Header -->
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <h1 class="display-6">
                     <i data-feather="activity" class="me-3"></i>
                     Change Manager Dashboard
                 </h1>
                 <p class="lead">Stakeholder pulse check insights and analytics</p>
             </div>
-            <div class="col-md-2">
-                <div class="d-grid gap-2">
-                    <a href="/manager/concerns" class="btn btn-outline-primary">
-                        <i data-feather="message-circle" class="me-2"></i>
-                        Manage Concerns
-                    </a>
-                    <a href="/manager/communications" class="btn btn-outline-success">
-                        <i data-feather="mail" class="me-2"></i>
-                        Communications
-                    </a>
-                    <a href="/manager/projects" class="btn btn-outline-secondary">
-                        <i data-feather="folder" class="me-2"></i>
-                        Projects
-                    </a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <label class="form-label"><strong>Project Filter:</strong></label>
-                        <select class="form-select" id="projectFilter" onchange="filterByProject()">
-                            <option value="">All Projects</option>
-                            {% for project in projects %}
-                                <option value="{{ project.id }}" {% if selected_project and selected_project.id == project.id %}selected{% endif %}>
-                                    {{ project.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        {% if selected_project %}
-                            <div class="mt-2">
-                                <small class="text-muted d-block">
-                                    <i data-feather="info" class="me-1"></i>
-                                    Showing data for: <strong>{{ selected_project.name }}</strong>
-                                </small>
-                                <a href="/manager/clear-project?next=/manager" class="btn btn-outline-secondary btn-sm mt-1">
-                                    <i data-feather="x" class="me-1"></i>
-                                    Clear Filter
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
         </div>
+
+        {% include 'project_filter.html' %}
         
         <!-- Enhanced Summary Cards -->
         <div class="row mb-4">
