@@ -7,9 +7,14 @@
                 <div id="projectSearchResults" class="list-group position-absolute shadow-sm" style="z-index:1050; display:none; max-height:250px; overflow-y:auto; width:calc(100% - 24px);"></div>
             </div>
         </div>
-        {% set active_project = selected_project if (selected_project is defined and selected_project) else (current_project if (current_project is defined and current_project) else none) %}
-        {% if active_project %}
-        <div class="mt-2 d-flex flex-wrap align-items-center gap-2">
+    </div>
+</div>
+
+{% set active_project = selected_project if (selected_project is defined and selected_project) else (current_project if (current_project is defined and current_project) else none) %}
+{% if active_project %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap align-items-center gap-2">
             <span class="badge bg-primary fs-6 py-2 px-3">
                 <i data-feather="folder" style="width:14px;height:14px" class="me-1"></i>
                 {{ active_project.name }}
@@ -40,9 +45,9 @@
             </a>
             {% endif %}
         </div>
-        {% endif %}
     </div>
 </div>
+{% endif %}
 
 <script>
 (function() {
