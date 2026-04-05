@@ -13,12 +13,14 @@ def generate_change_strategy_from_transcription(transcription, project_name="", 
     Returns: BCIP, Change Logic, Change Story, Key Messages, and Change Strategy
     """
     
-    # Initialize OpenAI client
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise Exception("OpenAI API key not found. Please configure your API key.")
-    
-    client = OpenAI(api_key=api_key)
+    base_url = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
+    client_kwargs = {"api_key": api_key}
+    if base_url:
+        client_kwargs["base_url"] = base_url
+    client = OpenAI(**client_kwargs)
     
     # Construct the prompt for ChatGPT
     prompt = f"""

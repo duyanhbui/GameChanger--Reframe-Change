@@ -3,12 +3,16 @@ import json
 from datetime import datetime
 from mental_models import get_mental_model_data
 
-# Check if OpenAI is available
 try:
     from openai import OpenAI
-    OPENAI_AVAILABLE = bool(os.environ.get("OPENAI_API_KEY"))
+    api_key = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    base_url = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
+    OPENAI_AVAILABLE = bool(api_key)
     if OPENAI_AVAILABLE:
-        openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        client_kwargs = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+        openai_client = OpenAI(**client_kwargs)
 except ImportError:
     OPENAI_AVAILABLE = False
     openai_client = None
