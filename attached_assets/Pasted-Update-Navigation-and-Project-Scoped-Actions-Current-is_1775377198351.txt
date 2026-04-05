@@ -1,0 +1,67 @@
+Update Navigation and Project-Scoped Actions
+
+Current issue:
+The top navigation bar includes multiple global sections (Dashboard, Concerns, Communications, Schedules, Admin), but in this app, only “Projects” should be global. All other sections should be accessed within the context of a selected project.
+
+Required changes:
+
+1. Simplify top navigation bar
+- Keep ONLY “Projects” as the main/global navigation item in the top bar.
+- Remove or hide:
+  - Dashboard
+  - Concerns
+  - Communications
+  - Schedules
+- These should no longer be globally accessible from the top bar.
+
+2. Move project-specific actions under Project Search section
+- On all relevant pages, under the “Search Projects” section (or project selection area), add buttons for:
+  - Dashboard
+  - Concerns
+  - Communications
+  - Schedules
+- These buttons should only appear when a project is selected.
+- These actions must be scoped to the currently selected project.
+
+3. Context-aware navigation behavior
+- When a user is inside a specific project page, show navigation options relative to that project.
+
+Example behavior:
+
+IF user is on Dashboard page:
+- Show buttons:
+  - Concerns
+  - Communications
+  - Schedules
+- Do NOT show “Dashboard” again
+
+IF user is on Concerns page:
+- Show buttons:
+  - Dashboard
+  - Communications
+  - Schedules
+
+IF user is on Communications page:
+- Show buttons:
+  - Dashboard
+  - Concerns
+  - Schedules
+
+IF user is on Schedules page:
+- Show buttons:
+  - Dashboard
+  - Concerns
+  - Communications
+
+4. Maintain project context
+- These navigation buttons must always keep the current project selected.
+- When switching between these sections, the app should stay scoped to the same project.
+- Do NOT reset to “All Projects”.
+
+5. UX expectations
+- Navigation should feel project-focused, not global.
+- Users should clearly understand they are working within a selected project.
+- Keep UI clean and consistent with current design.
+
+Goal:
+Make “Projects” the only global entry point, and ensure all other features (Dashboard, Concerns, Communications, Schedules) are accessed and operated within a selected project context.

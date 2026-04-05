@@ -7,25 +7,38 @@
                 <div id="projectSearchResults" class="list-group position-absolute shadow-sm" style="z-index:1050; display:none; max-height:250px; overflow-y:auto; width:calc(100% - 24px);"></div>
             </div>
         </div>
-        {% if selected_project is defined and selected_project %}
-        <div class="mt-2">
+        {% set active_project = selected_project if (selected_project is defined and selected_project) else (current_project if (current_project is defined and current_project) else none) %}
+        {% if active_project %}
+        <div class="mt-2 d-flex flex-wrap align-items-center gap-2">
             <span class="badge bg-primary fs-6 py-2 px-3">
                 <i data-feather="folder" style="width:14px;height:14px" class="me-1"></i>
-                {{ selected_project.name }}
-                {% if selected_project.company %}
-                <span class="ms-1 opacity-75">- {{ selected_project.company.name }}</span>
+                {{ active_project.name }}
+                {% if active_project.company %}
+                <span class="ms-1 opacity-75">- {{ active_project.company.name }}</span>
                 {% endif %}
             </span>
-        </div>
-        {% elif current_project is defined and current_project %}
-        <div class="mt-2">
-            <span class="badge bg-primary fs-6 py-2 px-3">
-                <i data-feather="folder" style="width:14px;height:14px" class="me-1"></i>
-                {{ current_project.name }}
-                {% if current_project.company %}
-                <span class="ms-1 opacity-75">- {{ current_project.company.name }}</span>
-                {% endif %}
-            </span>
+            {% set pid = active_project.id %}
+            {% set current_page = request.endpoint %}
+            {% if current_page != 'manager_dashboard' %}
+            <a href="{{ url_for('manager_dashboard', project_id=pid) }}" class="btn btn-sm btn-outline-primary">
+                <i data-feather="bar-chart-2" style="width:14px;height:14px" class="me-1"></i>Dashboard
+            </a>
+            {% endif %}
+            {% if current_page != 'concerns_management' %}
+            <a href="{{ url_for('concerns_management', project_id=pid) }}" class="btn btn-sm btn-outline-primary">
+                <i data-feather="message-circle" style="width:14px;height:14px" class="me-1"></i>Concerns
+            </a>
+            {% endif %}
+            {% if current_page != 'communications_center' %}
+            <a href="{{ url_for('communications_center', project_id=pid) }}" class="btn btn-sm btn-outline-primary">
+                <i data-feather="mail" style="width:14px;height:14px" class="me-1"></i>Communications
+            </a>
+            {% endif %}
+            {% if current_page != 'communication_schedules' %}
+            <a href="{{ url_for('communication_schedules', project_id=pid) }}" class="btn btn-sm btn-outline-primary">
+                <i data-feather="clock" style="width:14px;height:14px" class="me-1"></i>Schedules
+            </a>
+            {% endif %}
         </div>
         {% endif %}
     </div>
