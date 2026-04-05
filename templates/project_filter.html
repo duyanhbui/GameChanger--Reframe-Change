@@ -1,21 +1,10 @@
 <div class="card mb-4">
     <div class="card-body">
         <div class="row g-2 align-items-end">
-            <div class="col-md-8">
+            <div class="col-12">
                 <label class="form-label fw-bold mb-1">Search Projects</label>
                 <input type="text" id="projectSearchInput" class="form-control" placeholder="Type to search projects..." autocomplete="off">
                 <div id="projectSearchResults" class="list-group position-absolute shadow-sm" style="z-index:1050; display:none; max-height:250px; overflow-y:auto; width:calc(100% - 24px);"></div>
-            </div>
-            <div class="col-md-4">
-                {% if selected_project is defined and selected_project %}
-                <a href="{{ url_for('clear_active_project', next=request.path) }}" class="btn btn-outline-secondary w-100">
-                    <i data-feather="x" style="width:14px;height:14px" class="me-1"></i>Clear Filter
-                </a>
-                {% elif current_project is defined and current_project %}
-                <a href="{{ url_for('clear_active_project', next=request.path) }}" class="btn btn-outline-secondary w-100">
-                    <i data-feather="x" style="width:14px;height:14px" class="me-1"></i>Clear Filter
-                </a>
-                {% endif %}
             </div>
         </div>
         {% if selected_project is defined and selected_project %}
