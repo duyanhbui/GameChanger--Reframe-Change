@@ -13,36 +13,50 @@
 {% set active_project = selected_project if (selected_project is defined and selected_project) else (current_project if (current_project is defined and current_project) else none) %}
 {% if active_project %}
 <div class="card mb-4">
-    <div class="card-body">
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="badge bg-primary fs-6 py-2 px-3">
-                <i data-feather="folder" style="width:14px;height:14px" class="me-1"></i>
+    <div class="card-body py-3">
+        <div class="mb-3">
+            <span class="badge bg-primary fs-5 py-2 px-3">
+                <i data-feather="folder" style="width:16px;height:16px" class="me-1"></i>
                 {{ active_project.name }}
                 {% if active_project.company %}
-                <span class="ms-1 opacity-75">- {{ active_project.company.name }}</span>
+                <span class="ms-2 opacity-75">- {{ active_project.company.name }}</span>
                 {% endif %}
             </span>
-            {% set pid = active_project.id %}
-            {% set current_page = request.endpoint %}
+        </div>
+        {% set pid = active_project.id %}
+        {% set current_page = request.endpoint %}
+        <div class="row g-3">
             {% if current_page != 'manager_dashboard' %}
-            <a href="{{ url_for('manager_dashboard', project_id=pid) }}" class="btn btn-sm btn-outline-primary">
-                <i data-feather="bar-chart-2" style="width:14px;height:14px" class="me-1"></i>Dashboard
-            </a>
+            <div class="col-6 col-md-3">
+                <a href="{{ url_for('manager_dashboard', project_id=pid) }}" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-1">
+                    <i data-feather="bar-chart-2" style="width:24px;height:24px"></i>
+                    <span class="fw-semibold">Dashboard</span>
+                </a>
+            </div>
             {% endif %}
             {% if current_page != 'concerns_management' %}
-            <a href="{{ url_for('concerns_management', project_id=pid) }}" class="btn btn-sm btn-outline-primary">
-                <i data-feather="message-circle" style="width:14px;height:14px" class="me-1"></i>Concerns
-            </a>
+            <div class="col-6 col-md-3">
+                <a href="{{ url_for('concerns_management', project_id=pid) }}" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-1">
+                    <i data-feather="message-circle" style="width:24px;height:24px"></i>
+                    <span class="fw-semibold">Concerns</span>
+                </a>
+            </div>
             {% endif %}
             {% if current_page != 'communications_center' %}
-            <a href="{{ url_for('communications_center', project_id=pid) }}" class="btn btn-sm btn-outline-primary">
-                <i data-feather="mail" style="width:14px;height:14px" class="me-1"></i>Communications
-            </a>
+            <div class="col-6 col-md-3">
+                <a href="{{ url_for('communications_center', project_id=pid) }}" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-1">
+                    <i data-feather="mail" style="width:24px;height:24px"></i>
+                    <span class="fw-semibold">Communications</span>
+                </a>
+            </div>
             {% endif %}
             {% if current_page != 'communication_schedules' %}
-            <a href="{{ url_for('communication_schedules', project_id=pid) }}" class="btn btn-sm btn-outline-primary">
-                <i data-feather="clock" style="width:14px;height:14px" class="me-1"></i>Schedules
-            </a>
+            <div class="col-6 col-md-3">
+                <a href="{{ url_for('communication_schedules', project_id=pid) }}" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-1">
+                    <i data-feather="clock" style="width:24px;height:24px"></i>
+                    <span class="fw-semibold">Schedules</span>
+                </a>
+            </div>
             {% endif %}
         </div>
     </div>
